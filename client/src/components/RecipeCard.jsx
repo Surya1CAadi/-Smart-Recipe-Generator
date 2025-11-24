@@ -1,14 +1,66 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 export default function RecipeCard({ recipe, onRate }) {
   const [userRating, setUserRating] = useState(recipe.userRating || 0)
   const [expanded, setExpanded] = useState(false)
+  const [servingMultiplier, setServingMultiplier] = useState(1)
+  const [showSubstitutions, setShowSubstitutions] = useState(false)
+
+  // Reset all states when recipe changes
+  useEffect(() => {
+    setExpanded(false)
+    setServingMultiplier(1)
+    setShowSubstitutions(false)
+    setUserRating(recipe.userRating || 0)
+  }, [recipe._id, recipe.userRating])
 
   const avgRating = recipe.ratings?.length > 0 
     ? (recipe.ratings.reduce((a, b) => a + b, 0) / recipe.ratings.length).toFixed(1)
     : 0
 
   const matchScore = recipe.matchScore ? Math.round(recipe.matchScore * 100) : null
+
+  const adjustedServings = recipe.servings * servingMultiplier
+  
+  const adjustQuantity = (quantity, multiplier) => {
+    if (!quantity) return quantity
+    
+    // Extract number and unit
+    const match = quantity.match(/^(\d+(?:\.\d+)?)\s*(.*)$/)
+    if (match) {
+      const number = parseFloat(match[1])
+      const unit = match[2]
+      const adjusted = (number * multiplier).toFixed(number % 1 === 0 ? 0 : 1)
+      return `${adjusted}${unit ? ' ' + unit : ''}`
+    }
+    return quantity
+  }
+  
+  // Ingredient substitutions
+  const getSubstitutions = (ingredientName) => {
+    const substitutions = {
+      'chicken': ['turkey', 'tofu', 'paneer'],
+      'beef': ['chicken', 'pork', 'mushrooms'],
+      'butter': ['olive oil', 'coconut oil', 'margarine'],
+      'milk': ['almond milk', 'soy milk', 'coconut milk'],
+      'pasta': ['rice', 'quinoa', 'zucchini noodles'],
+      'rice': ['quinoa', 'cauliflower rice', 'pasta'],
+      'cream': ['coconut cream', 'cashew cream', 'milk'],
+      'cheese': ['nutritional yeast', 'cashew cheese', 'tofu'],
+      'egg': ['flax egg', 'chia egg', 'applesauce'],
+      'flour': ['almond flour', 'coconut flour', 'oat flour'],
+      'sugar': ['honey', 'maple syrup', 'stevia'],
+      'tomato': ['bell pepper', 'zucchini', 'eggplant'],
+      'onion': ['shallots', 'leeks', 'garlic'],
+      'garlic': ['onion powder', 'shallots', 'ginger']
+    }
+    
+    const key = Object.keys(substitutions).find(key => 
+      ingredientName.toLowerCase().includes(key)
+    )
+    
+    return key ? substitutions[key] : null
+  }
 
   const handleRate = (rating) => {
     setUserRating(rating)
@@ -21,7 +73,13 @@ export default function RecipeCard({ recipe, onRate }) {
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
-            onClick={() => interactive && handleRate(star)}
+            onClick={(e) => {
+              if (interactive) {
+                e.preventDefault()
+                e.stopPropagation()
+                handleRate(star)
+              }
+            }}
             disabled={!interactive}
             className={`${
               star <= rating 
@@ -46,15 +104,15 @@ export default function RecipeCard({ recipe, onRate }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-      <div className="p-6">
+    <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow overflow-hidden" data-recipe-id={recipe._id}>
+      <div className="p-4 sm:p-6">
         {/* Header */}
-        <div className="flex justify-between items-start mb-3">
-          <h3 className="text-xl font-semibold text-gray-900 flex-1 pr-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 flex-1">
             {recipe.title}
           </h3>
           {matchScore && (
-            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full self-start">
               {matchScore}% match
             </span>
           )}
@@ -72,8 +130,40 @@ export default function RecipeCard({ recipe, onRate }) {
             ⏱️ {recipe.cookTimeMin} min
           </span>
           <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-            👥 {recipe.servings} serving{recipe.servings !== 1 ? 's' : ''}
+            👥 {adjustedServings} serving{adjustedServings !== 1 ? 's' : ''}
           </span>
+        </div>
+
+        {/* Serving Size Adjuster */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 p-3 bg-gray-50 rounded gap-2">
+          <span className="text-sm font-medium text-gray-700">Adjust serving size:</span>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setServingMultiplier(Math.max(0.5, servingMultiplier - 0.5))
+              }}
+              className="w-8 h-8 bg-white border rounded-full flex items-center justify-center hover:bg-gray-100 text-sm"
+              disabled={servingMultiplier <= 0.5}
+            >
+              -
+            </button>
+            <span className="px-3 py-1 bg-white border rounded text-sm min-w-[60px] text-center">
+              {servingMultiplier}x
+            </span>
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setServingMultiplier(servingMultiplier + 0.5)
+              }}
+              className="w-8 h-8 bg-white border rounded-full flex items-center justify-center hover:bg-gray-100 text-sm"
+              disabled={servingMultiplier >= 4}
+            >
+              +
+            </button>
+          </div>
         </div>
 
         {/* Dietary tags */}
@@ -109,24 +199,28 @@ export default function RecipeCard({ recipe, onRate }) {
         {recipe.nutrition && (
           <div className="grid grid-cols-2 gap-2 mb-4 p-3 bg-gray-50 rounded">
             <div className="text-xs">
-              <span className="font-medium">Calories:</span> {recipe.nutrition.calories}
+              <span className="font-medium">Calories:</span> {Math.round(recipe.nutrition.calories * servingMultiplier)}
             </div>
             <div className="text-xs">
-              <span className="font-medium">Protein:</span> {recipe.nutrition.protein_g}g
+              <span className="font-medium">Protein:</span> {Math.round(recipe.nutrition.protein_g * servingMultiplier)}g
             </div>
             <div className="text-xs">
-              <span className="font-medium">Carbs:</span> {recipe.nutrition.carbs_g}g
+              <span className="font-medium">Carbs:</span> {Math.round(recipe.nutrition.carbs_g * servingMultiplier)}g
             </div>
             <div className="text-xs">
-              <span className="font-medium">Fat:</span> {recipe.nutrition.fat_g}g
+              <span className="font-medium">Fat:</span> {Math.round(recipe.nutrition.fat_g * servingMultiplier)}g
             </div>
           </div>
         )}
 
         {/* Expand/Collapse */}
         <button
-          onClick={() => setExpanded(!expanded)}
-          className="w-full text-blue-600 hover:text-blue-800 text-sm font-medium"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setExpanded(!expanded)
+          }}
+          className="w-full text-blue-600 hover:text-blue-800 text-sm font-medium py-2 border-t mt-4 pt-4"
         >
           {expanded ? '▼ Hide details' : '▶ Show ingredients & steps'}
         </button>
@@ -136,15 +230,39 @@ export default function RecipeCard({ recipe, onRate }) {
           <div className="mt-4 space-y-4 border-t pt-4">
             {/* Ingredients */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Ingredients:</h4>
-              <ul className="text-sm text-gray-700 space-y-1">
-                {recipe.ingredients?.map((ingredient, index) => (
-                  <li key={index} className="flex justify-between">
-                    <span>• {ingredient.name}</span>
-                    <span className="text-gray-500">{ingredient.quantity}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-2">
+                <h4 className="font-medium text-gray-900">
+                  Ingredients {servingMultiplier !== 1 && <span className="text-sm text-gray-600">(adjusted for {servingMultiplier}x)</span>}
+                </h4>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setShowSubstitutions(!showSubstitutions)
+                  }}
+                  className="text-xs text-blue-600 hover:text-blue-800 self-start sm:self-center px-2 py-1 border border-blue-200 rounded"
+                >
+                  {showSubstitutions ? '🔽 Hide substitutions' : '🔄 Show substitutions'}
+                </button>
+              </div>
+              <div className="space-y-2">
+                {recipe.ingredients?.map((ingredient, index) => {
+                  const substitutions = getSubstitutions(ingredient.name)
+                  return (
+                    <div key={`${recipe._id}-ingredient-${index}`} className="border-b border-gray-100 last:border-b-0 pb-2 last:pb-0">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                        <span className="text-sm text-gray-700">• {ingredient.name}</span>
+                        <span className="text-xs sm:text-sm text-gray-500">{adjustQuantity(ingredient.quantity, servingMultiplier)}</span>
+                      </div>
+                      {showSubstitutions && substitutions && (
+                        <div className="mt-1 ml-3 text-xs text-gray-500">
+                          <span className="font-medium">Alternatives:</span> {substitutions.join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
 
             {/* Steps */}

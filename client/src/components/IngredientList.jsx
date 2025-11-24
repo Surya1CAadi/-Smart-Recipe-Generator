@@ -60,24 +60,26 @@ export default function IngredientList({ ingredients, onAdd, onRemove, onClear }
           </button>
         </div>
       ) : (
-        <div>
-          <p className="text-gray-500 text-sm mb-3">
-            Add ingredients manually or upload a food image to get started
-          </p>
-          <div className="flex flex-wrap gap-2 mb-3">
-            <span className="text-xs text-gray-400">Quick add:</span>
-            {['chicken', 'tomato', 'pasta', 'rice', 'onion'].map(item => (
-              <button
-                key={item}
-                onClick={() => onAdd(item)}
-                className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors"
-              >
-                + {item}
-              </button>
-            ))}
-          </div>
-        </div>
+        <p className="text-gray-500 text-sm mb-3">
+          Add ingredients manually or upload a food image to get started
+        </p>
       )}
+      
+      {/* Quick add buttons - always visible */}
+      <div className="flex flex-wrap gap-2 mt-3">
+        <span className="text-xs text-gray-400">Quick add:</span>
+        {['chicken', 'tomato', 'pasta', 'rice', 'onion', 'potato', 'cheese', 'garlic'].map(item => (
+          !ingredients.includes(item) && (
+            <button
+              key={item}
+              onClick={() => onAdd(item)}
+              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors"
+            >
+              + {item}
+            </button>
+          )
+        ))}
+      </div>
       
       {ingredients.length > 0 && (
         <div className="mt-4 p-3 bg-green-50 rounded text-xs text-green-800">

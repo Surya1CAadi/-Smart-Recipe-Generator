@@ -5,24 +5,25 @@ A comprehensive full-stack web application that suggests recipes based on availa
 ## 🎯 Project Status: COMPLETE
 
 ### ✅ All Required Features Implemented:
-- **Image Recognition**: TensorFlow.js MobileNet for ingredient detection from photos
+- **Image Recognition**: TensorFlow.js COCO-SSD for ingredient detection from photos
 - **Recipe Matching**: Smart algorithm with ingredient overlap scoring and substitutions
 - **Advanced Filtering**: Difficulty, cuisine, cook time, dietary restrictions
 - **Rating System**: 5-star ratings with personalized suggestions
 - **Responsive UI**: Mobile-first design with Tailwind CSS
-- **Recipe Database**: 21+ diverse recipes across multiple cuisines
+- **Recipe Database**: 34+ diverse recipes across multiple cuisines
 - **Deployment Ready**: Configured for Vercel (frontend) and Render (backend)
 
 ## 🚀 Features
 
 ### 📸 AI-Powered Image Recognition
 - Upload food photos to automatically detect ingredients
-- TensorFlow.js MobileNet model runs entirely in the browser
+- TensorFlow.js COCO-SSD object detection model runs entirely in the browser
 - Maps detected objects to cooking ingredients with confidence scoring
 
 ### 🔍 Smart Recipe Matching
 - Find recipes based on available ingredients with scoring algorithm
 - Handles ingredient substitutions (e.g., rice → basmati, chicken → poultry)
+- Ingredient substitution suggestions for dietary preferences
 - Dietary restriction filtering (vegetarian, vegan, gluten-free)
 
 ### 🎛️ Advanced Search & Filters
@@ -34,6 +35,7 @@ A comprehensive full-stack web application that suggests recipes based on availa
 ### ⭐ Personalization & Ratings
 - 5-star rating system for recipes
 - Popular recipe suggestions based on community ratings
+- Advanced filtering for popular recipes (Veg/Non-Veg, cuisine, difficulty)
 - Personalized recommendations
 
 ### 📱 Modern UI/UX
@@ -42,15 +44,16 @@ A comprehensive full-stack web application that suggests recipes based on availa
 - Mobile-optimized interface
 - Loading states and error handling
 
-## 🍽️ Recipe Database (21+ Recipes)
+## 🍽️ Recipe Database (34+ Recipes)
 
-- **Indian**: Butter Chicken, Palak Paneer, Rajma, Chicken Biryani, Dal Tadka, Aloo Gobi
-- **Italian**: Classic Tomato Pasta, Margherita Pizza
-- **Asian**: Chicken Teriyaki, Vegetable Fried Rice, Pad Thai, Kimchi Fried Rice
-- **Mexican**: Black Bean Tacos
-- **Mediterranean**: Greek Salad, Hummus
-- **American**: Caesar Salad, Grilled Cheese Sandwich
-- **Others**: French Omelette, Fish and Chips, Spanish Paella, German Potato Salad
+- **Indian**: Butter Chicken, Palak Paneer, Rajma, Chicken Biryani, Dal Tadka, Aloo Gobi, Tandoori Chicken, Vegetable Biryani
+- **Italian**: Classic Tomato Pasta, Margherita Pizza, Chicken Alfredo Pasta, Caprese Salad
+- **Asian**: Chicken Teriyaki, Vegetable Fried Rice, Pad Thai, Kimchi Fried Rice, Beef Stir Fry, Miso Soup
+- **Mexican**: Black Bean Tacos, Chicken Enchiladas, Guacamole
+- **Mediterranean**: Greek Salad, Chicken Souvlaki, Falafel, Hummus
+- **American**: Caesar Salad, Grilled Cheese Sandwich, BBQ Pulled Pork, Mac and Cheese
+- **French**: French Omelette, Beef Bourguignon
+- **Others**: Fish and Chips, Spanish Paella, German Potato Salad
 
 ## 🛠️ Quick Start
 
@@ -177,7 +180,7 @@ Smart-Recipe-Generator/
 
 ### AI/ML:
 - **TensorFlow.js** - Machine learning in browser
-- **MobileNet** - Pre-trained image classification model
+- **COCO-SSD** - Advanced real-time object detection model
 
 ### DevOps:
 - **Vercel** - Frontend deployment
@@ -186,7 +189,7 @@ Smart-Recipe-Generator/
 
 ## 📝 Assessment Summary (200 words)
 
-This Smart Recipe Generator demonstrates comprehensive full-stack development expertise using modern MERN stack technologies. The application successfully integrates AI-powered ingredient recognition through TensorFlow.js MobileNet, enabling users to upload food photos for automatic ingredient detection.
+This Smart Recipe Generator demonstrates comprehensive full-stack development expertise using modern MERN stack technologies. The application successfully integrates AI-powered ingredient recognition through TensorFlow.js COCO-SSD object detection, enabling users to upload food photos for automatic ingredient detection.
 
 Key technical achievements include a sophisticated recipe matching algorithm that scores ingredient overlap and handles substitutions, comprehensive filtering system supporting dietary restrictions and preferences, and a responsive React interface built with Tailwind CSS. The backend implements RESTful API design with proper error handling and efficient MongoDB queries.
 
@@ -198,6 +201,6 @@ The application addresses all specified requirements while implementing advanced
 
 ---
 
-**Live Demo**: [Deploy to see live application]  
-**Repository**: [GitHub Repository Link]  
-**Contact**: [Your Contact Information]
+**Live Demo**: Coming Soon - Deploy to see live application  
+**Repository**: https://github.com/Surya1CAadi/-Smart-Recipe-Generator  
+**Total Recipes**: 34 diverse recipes across 11+ cuisines
