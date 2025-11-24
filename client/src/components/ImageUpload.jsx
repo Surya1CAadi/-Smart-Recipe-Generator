@@ -41,7 +41,7 @@ export default function ImageUpload({ onImageUpload, loading, modelLoaded }) {
       </h2>
       
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+        className={`border-2 border-dashed rounded-lg p-4 sm:p-8 text-center cursor-pointer transition-colors ${
           dragOver 
             ? 'border-blue-400 bg-blue-50' 
             : 'border-gray-300 hover:border-gray-400'
@@ -56,7 +56,7 @@ export default function ImageUpload({ onImageUpload, loading, modelLoaded }) {
             <img 
               src={preview} 
               alt="Preview" 
-              className="max-w-full max-h-48 mx-auto rounded"
+              className="max-w-full max-h-32 sm:max-h-48 mx-auto rounded"
             />
             {loading ? (
               <p className="text-blue-600">Analyzing image...</p>
@@ -65,13 +65,13 @@ export default function ImageUpload({ onImageUpload, loading, modelLoaded }) {
             )}
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="text-4xl">📷</div>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="text-3xl sm:text-4xl">📷</div>
             <div>
-              <p className="text-lg font-medium text-gray-700">
+              <p className="text-base sm:text-lg font-medium text-gray-700">
                 Drop an image here or click to upload
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-xs sm:text-sm text-gray-500 mt-2">
                 {modelLoaded 
                   ? 'Upload photos of ingredients, fruits, vegetables, or prepared dishes'
                   : 'AI model is loading...'

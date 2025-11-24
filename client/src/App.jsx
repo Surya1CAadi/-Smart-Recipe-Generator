@@ -275,6 +275,7 @@ export default function App() {
     {
       _id: 'fallback-1',
       title: 'Simple Tomato Pasta',
+      image: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=250&fit=crop',
       ingredients: [{ name: 'pasta', quantity: '200g' }, { name: 'tomato', quantity: '2' }],
       steps: ['Boil pasta', 'Make tomato sauce', 'Mix together'],
       nutrition: { calories: 400, protein_g: 12, carbs_g: 60, fat_g: 8 },
@@ -289,6 +290,7 @@ export default function App() {
     {
       _id: 'fallback-2', 
       title: 'Quick Chicken Stir Fry',
+      image: 'https://images.unsplash.com/photo-1619503464123-6de5fce26e99?w=400&h=250&fit=crop',
       ingredients: [{ name: 'chicken', quantity: '200g' }, { name: 'vegetables', quantity: '150g' }],
       steps: ['Cut chicken', 'Stir fry with vegetables', 'Season and serve'],
       nutrition: { calories: 350, protein_g: 25, carbs_g: 15, fat_g: 18 },
@@ -464,10 +466,10 @@ export default function App() {
         )}
         
         {/* Tab Navigation */}
-        <div className="flex space-x-4 mb-8">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mb-6 sm:mb-8">
           <button
             onClick={() => setActiveTab('upload')}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${
               activeTab === 'upload'
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-gray-600 hover:bg-gray-50'
@@ -477,7 +479,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('search')}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${
               activeTab === 'search'
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-gray-600 hover:bg-gray-50'
@@ -490,7 +492,7 @@ export default function App() {
               setActiveTab('suggestions')
               getRecipeSuggestions()
             }}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${
               activeTab === 'suggestions'
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-gray-600 hover:bg-gray-50'
@@ -511,9 +513,9 @@ export default function App() {
         {loading && <LoadingSpinner />}
 
         {/* Tab Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          {/* Left Column - Controls */}
-          <div className="lg:col-span-1 order-2 lg:order-1">
+        <div className="space-y-6 lg:grid lg:grid-cols-3 lg:gap-8 lg:space-y-0">
+          {/* Controls Section - Always appears first on mobile */}
+          <div className="lg:col-span-1">
             {activeTab === 'upload' && (
               <ImageUpload 
                 onImageUpload={handleImageUpload}
@@ -662,13 +664,40 @@ export default function App() {
                       </div>
                     </div>
                   )}
+                  
+                  {/* Recipe Discovery Tips */}
+                  <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                    <h3 className="text-sm font-semibold text-gray-800 mb-2">💡 Recipe Discovery Tips</h3>
+                    <ul className="text-xs text-gray-600 space-y-1">
+                      <li>• <strong>Mix cuisines:</strong> Try Italian vegetarian or Asian easy recipes</li>
+                      <li>• <strong>Difficulty levels:</strong> Start with easy recipes for quick meals</li>
+                      <li>• <strong>Dietary filters:</strong> Discover plant-based alternatives</li>
+                      <li>• <strong>High ratings:</strong> Community favorites are shown first</li>
+                    </ul>
+                  </div>
+                  
+                  {/* Quick Stats */}
+                  <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-lg font-bold text-blue-600">34+</div>
+                      <div className="text-xs text-gray-600">Recipes</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-lg font-bold text-green-600">11+</div>
+                      <div className="text-xs text-gray-600">Cuisines</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-lg font-bold text-purple-600">4.2★</div>
+                      <div className="text-xs text-gray-600">Avg Rating</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Right Column - Recipe Results */}
-          <div className="lg:col-span-2 order-1 lg:order-2">
+          {/* Recipe Results Section */}
+          <div className="lg:col-span-2">
             {recipes.length > 0 ? (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                 {recipes.map(recipe => (
