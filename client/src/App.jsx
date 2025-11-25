@@ -576,7 +576,7 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 w-full">
       <Header user={user} onLogout={handleLogout} onAuth={setUser} authOpen={authModalOpen} setAuthOpen={setAuthModalOpen} />
 
-      <main className="w-full px-4 pb-8 min-h-screen">
+      <main className="w-full px-4 pb-8 min-h-screen" style={{ minWidth: '1200px' }}>
         {/* Connection Status */}
         {!apiConnected && (
           <div className="mb-6 p-3 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-lg">
@@ -625,20 +625,20 @@ export default function App() {
             >
               ⭐ Popular Recipes
             </button>
-            {user && (
-              <button
-                onClick={() => {
-                  setActiveTab('favorites')
-                  getFavoriteRecipes()
-                }}
-                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${activeTab === 'favorites'
-                  ? 'bg-gradient-to-r from-pink-500 to-red-600 text-white shadow-lg'
-                  : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
-                  }`}
-              >
-                ❤️ My Favorites
-              </button>
-            )}
+            <button
+              onClick={() => {
+                setActiveTab('favorites');
+                if (user) {
+                  getFavoriteRecipes();
+                }
+              }}
+              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${activeTab === 'favorites'
+                ? 'bg-gradient-to-r from-pink-500 to-red-600 text-white shadow-lg'
+                : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
+                }`}
+            >
+              ❤️ My Favorites
+            </button>
           </div>
         </div>
 
@@ -656,7 +656,7 @@ export default function App() {
         <div className="flex flex-col lg:flex-row lg:gap-8 space-y-6 lg:space-y-0 w-full">
           {/* Left Sidebar - Sticky Controls Section */}
           <div className="lg:w-80 xl:w-96 2xl:w-[400px] flex-shrink-0">
-            <div className="sticky top-24 max-h-[80vh] overflow-y-auto overflow-x-hidden space-y-6">
+            <div className={activeTab === 'search' ? "sticky top-24 max-h-[80vh] overflow-y-auto overflow-x-hidden space-y-6" : "space-y-6"}>
               {activeTab === 'upload' && (
                 <ImageUpload
                   onImageUpload={handleImageUpload}
@@ -839,11 +839,11 @@ export default function App() {
                     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-6 rounded-lg text-center">
                       <div className="text-3xl mb-2">🔒</div>
                       <h2 className="text-lg font-bold mb-2">Login Required</h2>
-                      <p className="text-sm">Please login to view and manage your favorite recipes.</p>
+                      <p className="text-sm">Login to see your favorite items.</p>
                     </div>
                   ) : (
-                    <>
-                      <div className="bg-gradient-to-br from-white via-pink-50/30 to-red-50/30 rounded-xl shadow-lg border-2 border-transparent p-6 relative overflow-hidden">
+                    <div>
+                      <div className="bg-gradient-to-br from-white via-pink-50/30 to-red-50/30 rounded-xl shadow-lg border-2 border-transparent p-6 relative overflow-hidden mb-6">
                         <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-red-500/5 opacity-50"></div>
                         <div className="relative z-10">
                           <h2 className="text-lg font-semibold mb-4 bg-gradient-to-r from-pink-600 to-red-600 bg-clip-text text-transparent flex items-center">
@@ -887,22 +887,7 @@ export default function App() {
                           </div>
                         </div>
                       </div>
-
-                      {recipes.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 lg:gap-6 w-full mt-6">
-                          {recipes.map(recipe => (
-                            <RecipeCard
-                              key={`recipe-${recipe._id}-favorites`}
-                              recipe={recipe}
-                              onRate={rateRecipe}
-                              onToggleFavorite={toggleFavorite}
-                              isFavorite={recipe.isFavorite}
-                              user={user}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </>
+                    </div>
                   )}
                 </div>
               )}
@@ -911,37 +896,60 @@ export default function App() {
 
           {/* Recipe Results Section - 3 columns on large screens */}
           <div className="flex-1 min-w-0 w-full">
-            {recipes.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 lg:gap-6 w-full">
-                {recipes.map(recipe => (
-                  <RecipeCard
-                    key={`recipe-${recipe._id}-${activeTab}`}
-                    recipe={recipe}
-                    onRate={rateRecipe}
-                    onToggleFavorite={toggleFavorite}
-                    isFavorite={favorites.has(recipe._id)}
-                    user={user}
-                  />
-                ))}
-              </div>
-            ) : !loading && activeTab !== 'upload' ? (
-              <div className="text-center text-gray-500 py-12">
-                <div className="text-6xl mb-4">🍳</div>
-                <h3 className="text-xl font-medium mb-2">No recipes found</h3>
-                <p>
-                  {activeTab === 'search'
-                    ? 'Add ingredients and search to find recipes'
-                    : 'No popular recipes available'
-                  }
-                </p>
-              </div>
-            ) : activeTab === 'upload' && !loading ? (
-              <div className="text-center text-gray-500 py-12">
-                <div className="text-6xl mb-4">📸</div>
-                <h3 className="text-xl font-medium mb-2">Upload Food Image</h3>
-                <p>Upload a photo of ingredients or food items to get recipe suggestions</p>
-              </div>
-            ) : null}
+            {activeTab === 'favorites' && user ? (
+              recipes.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 lg:gap-6 w-full">
+                  {recipes.map(recipe => (
+                    <RecipeCard
+                      key={`recipe-${recipe._id}-favorites-main`}
+                      recipe={recipe}
+                      onRate={rateRecipe}
+                      onToggleFavorite={toggleFavorite}
+                      isFavorite={recipe.isFavorite}
+                      user={user}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-12">
+                  <div className="text-6xl mb-4">❤️</div>
+                  <h3 className="text-xl font-medium mb-2">No favorite recipes found</h3>
+                  <p>Add recipes to your favorites to see them here.</p>
+                </div>
+              )
+            ) : activeTab !== 'favorites' && (
+              recipes.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 lg:gap-6 w-full">
+                  {recipes.map(recipe => (
+                    <RecipeCard
+                      key={`recipe-${recipe._id}-${activeTab}`}
+                      recipe={recipe}
+                      onRate={rateRecipe}
+                      onToggleFavorite={toggleFavorite}
+                      isFavorite={favorites.has(recipe._id)}
+                      user={user}
+                    />
+                  ))}
+                </div>
+              ) : !loading && activeTab !== 'upload' ? (
+                <div className="text-center text-gray-500 py-12">
+                  <div className="text-6xl mb-4">🍳</div>
+                  <h3 className="text-xl font-medium mb-2">No recipes found</h3>
+                  <p>
+                    {activeTab === 'search'
+                      ? 'Add ingredients and search to find recipes'
+                      : 'No popular recipes available'
+                    }
+                  </p>
+                </div>
+              ) : activeTab === 'upload' && !loading ? (
+                <div className="text-center text-gray-500 py-12">
+                  <div className="text-6xl mb-4">📸</div>
+                  <h3 className="text-xl font-medium mb-2">Upload Food Image</h3>
+                  <p>Upload a photo of ingredients or food items to get recipe suggestions</p>
+                </div>
+              ) : null
+            )}
           </div>
         </div>
       </main>
