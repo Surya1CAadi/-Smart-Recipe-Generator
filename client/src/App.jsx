@@ -275,7 +275,7 @@ export default function App() {
     {
       _id: 'fallback-1',
       title: 'Simple Tomato Pasta',
-      image: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=250&fit=crop',
+      image: '/photos/Classic-Tomato-Pasta.jpg',
       ingredients: [{ name: 'pasta', quantity: '200g' }, { name: 'tomato', quantity: '2' }],
       steps: ['Boil pasta', 'Make tomato sauce', 'Mix together'],
       nutrition: { calories: 400, protein_g: 12, carbs_g: 60, fat_g: 8 },
@@ -290,7 +290,7 @@ export default function App() {
     {
       _id: 'fallback-2', 
       title: 'Quick Chicken Stir Fry',
-      image: 'https://images.unsplash.com/photo-1619503464123-6de5fce26e99?w=400&h=250&fit=crop',
+      image: '/photos/Chicken-Teriyaki.jpg',
       ingredients: [{ name: 'chicken', quantity: '200g' }, { name: 'vegetables', quantity: '150g' }],
       steps: ['Cut chicken', 'Stir fry with vegetables', 'Season and serve'],
       nutrition: { calories: 350, protein_g: 25, carbs_g: 15, fat_g: 18 },
@@ -452,10 +452,10 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 w-full">
       <Header />
       
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
+      <main className="w-full px-4 pb-8 min-h-screen">
         {/* Connection Status */}
         {!apiConnected && (
           <div className="mb-6 p-3 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-lg">
@@ -465,41 +465,43 @@ export default function App() {
           </div>
         )}
         
-        {/* Tab Navigation */}
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mb-6 sm:mb-8">
-          <button
-            onClick={() => setActiveTab('upload')}
-            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${
-              activeTab === 'upload'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            📷 Upload Image
-          </button>
-          <button
-            onClick={() => setActiveTab('search')}
-            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${
-              activeTab === 'search'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            🔍 Search Recipes
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('suggestions')
-              getRecipeSuggestions()
-            }}
-            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${
-              activeTab === 'suggestions'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            ⭐ Popular Recipes
-          </button>
+        {/* Tab Navigation - Sticky */}
+        <div className="sticky top-20 z-40 bg-gradient-to-r from-blue-50/90 via-purple-50/90 to-pink-50/90 backdrop-blur-md py-4 mb-6 rounded-xl mx-2">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 px-4">
+            <button
+              onClick={() => setActiveTab('upload')}
+              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${
+                activeTab === 'upload'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                  : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
+              }`}
+            >
+              📷 Upload Image
+            </button>
+            <button
+              onClick={() => setActiveTab('search')}
+              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${
+                activeTab === 'search'
+                  ? 'bg-gradient-to-r from-green-500 to-blue-600 text-white shadow-lg'
+                  : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
+              }`}
+            >
+              🔍 Search Recipes
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('suggestions')
+                getRecipeSuggestions()
+              }}
+              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${
+                activeTab === 'suggestions'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg'
+                  : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
+              }`}
+            >
+              ⭐ Popular Recipes
+            </button>
+          </div>
         </div>
 
         {/* Error Display */}
@@ -513,16 +515,17 @@ export default function App() {
         {loading && <LoadingSpinner />}
 
         {/* Tab Content */}
-        <div className="space-y-6 lg:grid lg:grid-cols-3 lg:gap-8 lg:space-y-0">
-          {/* Controls Section - Always appears first on mobile */}
-          <div className="lg:col-span-1">
-            {activeTab === 'upload' && (
-              <ImageUpload 
-                onImageUpload={handleImageUpload}
-                loading={loading}
-                modelLoaded={!!model}
-              />
-            )}
+        <div className="flex flex-col lg:flex-row lg:gap-8 space-y-6 lg:space-y-0 w-full">
+          {/* Left Sidebar - Sticky Controls Section */}
+          <div className="lg:w-80 xl:w-96 2xl:w-[400px] flex-shrink-0">
+            <div className="lg:sticky lg:top-32 space-y-6">
+              {activeTab === 'upload' && (
+                <ImageUpload 
+                  onImageUpload={handleImageUpload}
+                  loading={loading}
+                  modelLoaded={!!model}
+                />
+              )}
             
             {activeTab === 'search' && (
               <div className="space-y-6">
@@ -546,8 +549,9 @@ export default function App() {
                 <button
                   onClick={findRecipes}
                   disabled={ingredients.length === 0 || loading}
-                  className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 px-6 rounded-xl hover:from-emerald-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-semibold text-lg shadow-lg transform hover:scale-[1.02] disabled:hover:scale-100 flex items-center justify-center gap-2"
                 >
+                  <span className="animate-bounce">🔍</span>
                   Find Recipes ({ingredients.length} ingredients)
                 </button>
               </div>
@@ -694,12 +698,13 @@ export default function App() {
                 </div>
               </div>
             )}
+            </div>
           </div>
 
-          {/* Recipe Results Section */}
-          <div className="lg:col-span-2">
+          {/* Recipe Results Section - 3 columns on large screens */}
+          <div className="flex-1 min-w-0 w-full">
             {recipes.length > 0 ? (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 lg:gap-6 w-full">
                 {recipes.map(recipe => (
                   <RecipeCard
                     key={`recipe-${recipe._id}-${activeTab}`}

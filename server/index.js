@@ -2,11 +2,15 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 const Recipe = require('./models/recipe');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve static images from photos folder
+app.use('/photos', express.static(path.join(__dirname, 'photos')));
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart_recipe_dev';
 
@@ -100,6 +104,58 @@ app.post('/api/recipes/:id/rate', async (req, res) => {
   }
 });
 
+// Add recipe to favorites
+app.post('/api/recipes/:id/favorite', async (req, res) => {
+  try {
+    const recipe = await Recipe.findById(req.params.id);
+    if (!recipe) {
+      return res.status(404).json({ ok: false, error: 'Recipe not found' });
+    }
+    
+    // Increment favorites count
+    recipe.favorites = (recipe.favorites || 0) + 1;
+    await recipe.save();
+    
+    res.json({ ok: true, favorites: recipe.favorites });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Remove recipe from favorites
+app.delete('/api/recipes/:id/favorite', async (req, res) => {
+  try {
+    const recipe = await Recipe.findById(req.params.id);
+    if (!recipe) {
+      return res.status(404).json({ ok: false, error: 'Recipe not found' });
+    }
+    
+    // Decrement favorites count
+    recipe.favorites = Math.max(0, (recipe.favorites || 0) - 1);
+    await recipe.save();
+    
+    res.json({ ok: true, favorites: recipe.favorites });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Get user's favorite recipes
+app.get('/api/recipes/favorites', async (req, res) => {
+  try {
+    // For now, return recipes with highest favorites count
+    // In a real app, this would be user-specific
+    const recipes = await Recipe.find({})
+      .sort({ favorites: -1, createdAt: -1 })
+      .limit(10)
+      .lean();
+    
+    res.json({ ok: true, data: recipes });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // Get recipe suggestions based on popular ratings
 app.get('/api/recipes/suggestions', async (req, res) => {
   try {
@@ -146,4 +202,7 @@ app.get('/api/recipes/suggestions', async (req, res) => {
 app.get('/api/health', (req, res) => res.json({ ok: true, now: new Date() }));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+  console.log(`Images available at: http://localhost:${PORT}/photos/`);
+});

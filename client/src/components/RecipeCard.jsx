@@ -5,6 +5,7 @@ export default function RecipeCard({ recipe, onRate }) {
   const [expanded, setExpanded] = useState(false)
   const [servingMultiplier, setServingMultiplier] = useState(1)
   const [showSubstitutions, setShowSubstitutions] = useState(false)
+  const [imgError, setImgError] = useState(false)
 
   // Reset all states when recipe changes
   useEffect(() => {
@@ -96,16 +97,17 @@ export default function RecipeCard({ recipe, onRate }) {
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
-      case 'easy': return 'bg-green-100 text-green-800'
-      case 'medium': return 'bg-yellow-100 text-yellow-800'
-      case 'hard': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'easy': return 'bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-md'
+      case 'medium': return 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-md'
+      case 'hard': return 'bg-gradient-to-r from-red-400 to-pink-500 text-white shadow-md'
+      default: return 'bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-md'
     }
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow overflow-hidden" data-recipe-id={recipe._id}>
-      <div className="p-4 sm:p-6 h-[580px] sm:h-[620px] flex flex-col">
+    <div className="bg-white rounded-xl shadow-lg border-2 border-transparent bg-gradient-to-br from-white to-gray-50 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 overflow-hidden relative group" data-recipe-id={recipe._id}>
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      <div className="relative p-3 sm:p-4 xl:p-6 h-[520px] sm:h-[580px] xl:h-[600px] flex flex-col">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
           <h3 className="text-lg sm:text-xl font-semibold text-gray-900 flex-1">
@@ -124,32 +126,23 @@ export default function RecipeCard({ recipe, onRate }) {
             /* Summary View */
             <div className="flex flex-col h-full">
               {/* Recipe Image */}
-              {recipe.image ? (
+              {recipe.image && !imgError ? (
                 <div className="mb-4 rounded-lg overflow-hidden bg-gray-100">
-                  <img 
-                    src={recipe.image} 
+                  <img
+                    src={recipe.image}
                     alt={recipe.title}
-                    className="w-full h-32 sm:h-40 object-cover hover:scale-105 transition-transform duration-200"
+                    className="w-full h-28 sm:h-32 xl:h-36 object-cover hover:scale-105 transition-transform duration-200"
                     style={{ objectPosition: 'center' }}
-                    onError={(e) => {
-                      e.target.style.display = 'none'
-                      e.target.parentElement.innerHTML = `
-                        <div class="w-full h-32 sm:h-40 bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center">
-                          <div class="text-center text-white">
-                            <div class="text-2xl mb-2">🍽️</div>
-                            <div class="text-sm font-medium">${recipe.title}</div>
-                          </div>
-                        </div>
-                      `
-                    }}
+                    onError={() => setImgError(true)}
                   />
                 </div>
               ) : (
                 <div className="mb-4 rounded-lg overflow-hidden">
-                  <div className="w-full h-32 sm:h-40 bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center">
-                    <div className="text-center text-white">
-                      <div className="text-2xl mb-2">🍽️</div>
-                      <div className="text-sm font-medium">{recipe.title}</div>
+                  <div className="w-full h-28 sm:h-32 xl:h-36 bg-gradient-to-br from-orange-400 via-red-500 to-pink-500 flex items-center justify-center relative">
+                    <div className="absolute inset-0 bg-black/10"></div>
+                    <div className="text-center text-white relative z-10">
+                      <div className="text-xl sm:text-2xl mb-2">🍽️</div>
+                      <div className="text-xs sm:text-sm font-medium px-2">{recipe.title}</div>
                     </div>
                   </div>
                 </div>
