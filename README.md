@@ -14,6 +14,7 @@ A comprehensive full-stack web application that suggests recipes based on availa
 
 ## 🌐 Live Project Links
 🔗 **Live Application URL:** https://smart-recipe-generator-jw5a.onrender.com/
+
 🔗 **GitHub Repository:** https://github.com/Surya1CAadi/-Smart-Recipe-Generator
 
 ---
@@ -114,5 +115,3 @@ NODE_ENV=production
 ## 📄 License
 
 This project is licensed under the **MIT License** — feel free to use, modify, and distribute it.
-
----
