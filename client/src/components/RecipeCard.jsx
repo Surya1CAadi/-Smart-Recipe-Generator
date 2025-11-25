@@ -137,7 +137,7 @@ export default function RecipeCard({ recipe, onRate, onToggleFavorite, isFavorit
       <div className="relative p-3 sm:p-4 xl:p-6 h-[520px] sm:h-[580px] xl:h-[600px] flex flex-col">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
-          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 flex-1">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex-1">
             {recipe.title}
           </h3>
           <div className="flex items-center gap-2">

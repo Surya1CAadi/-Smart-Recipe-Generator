@@ -40,7 +40,7 @@ const sampleRecipes = [
   
   // Indian Recipes
   {
-    title: 'Butter Chicken (Murgh Makhani)',
+    title: 'Butter Chicken',
     image: '/photos/Butter-Chicken.jpg',
     ingredients: [ { name: 'chicken', quantity: '500g' }, { name: 'tomato', quantity: '3' }, { name: 'butter', quantity: '50g' }, { name: 'cream', quantity: '1/4 cup' }, { name: 'onion', quantity: '1' }, { name: 'ginger garlic paste', quantity: '1 tbsp' }, { name: 'garam masala', quantity: '1 tsp' } ],
     steps: ['Marinate chicken with yogurt and spices','Cook chicken until tender','Make tomato gravy with onions','Add cooked chicken to gravy','Finish with butter and cream','Serve hot with rice'],
@@ -66,7 +66,7 @@ const sampleRecipes = [
     ratings: [4, 5]
   },
   {
-    title: 'Rajma (Red Kidney Bean Curry)',
+    title: 'Rajma',
     image: '/photos/Rajma.jpg',
     ingredients: [ { name: 'red kidney beans', quantity: '1 cup' }, { name: 'onion', quantity: '2' }, { name: 'tomato', quantity: '2' }, { name: 'ginger garlic paste', quantity: '1 tbsp' }, { name: 'cumin seeds', quantity: '1 tsp' }, { name: 'red chili powder', quantity: '1 tsp' } ],
     steps: ['Soak beans overnight and pressure cook','Sauté onions until golden','Add tomatoes and spices','Mix cooked beans','Simmer until thick','Serve with rice'],
@@ -133,7 +133,7 @@ const sampleRecipes = [
     ratings: [5, 4]
   },
   {
-    title: 'Vegetable Fried Rice',
+    title: 'Veg Fried Rice',
     image: '/photos/Vegetable-Fried-Rice.jpg',
     ingredients: [ { name: 'rice', quantity: '2 cups cooked' }, { name: 'mixed vegetables', quantity: '1 cup' }, { name: 'soy sauce', quantity: '2 tbsp' }, { name: 'egg', quantity: '2' }, { name: 'garlic', quantity: '2 cloves' } ],
     steps: ['Scramble eggs and set aside','Stir fry vegetables','Add cooked rice','Mix in soy sauce and eggs','Serve hot'],
