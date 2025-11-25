@@ -14,6 +14,7 @@ A comprehensive full-stack web application that suggests recipes based on availa
 
 ## 🌐 Live Project Links
 - 🔗 **Live Application URL:** https://smart-recipe-generator-jw5a.onrender.com/
+-  Id - aditya@gmail.com     Password - 1234567
 - 🔗 **GitHub Repository:** https://github.com/Surya1CAadi/-Smart-Recipe-Generator
 
 ---
