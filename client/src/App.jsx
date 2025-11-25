@@ -80,23 +80,23 @@ export default function App() {
     try {
       setLoading(true)
       setError('')
-      
+
       // Create image element for processing
       const img = new Image()
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
-      
+
       img.onload = async () => {
         canvas.width = img.width
         canvas.height = img.height
         ctx.drawImage(img, 0, 0)
-        
+
         // Get object detections from model
         const predictions = await model.detect(canvas)
-        
+
         // Debug: Log all predictions
         console.log('All predictions:', predictions.map(p => ({ class: p.class, score: p.score })))
-        
+
         // Map predictions to ingredients with lower threshold
         const detectedIngredients = predictions
           .filter(p => p.score > 0.15) // Lower confidence threshold for better detection
@@ -107,7 +107,7 @@ export default function App() {
           })
           .filter(ingredient => ingredient !== null)
           .slice(0, 8) // Increased to top 8 ingredients
-        
+
         if (detectedIngredients.length > 0) {
           const uniqueIngredients = [...new Set([...ingredients, ...detectedIngredients])]
           setIngredients(uniqueIngredients)
@@ -117,10 +117,10 @@ export default function App() {
           const fallbackVeggies = ['onion', 'tomato', 'potato', 'bell pepper', 'lettuce']
           setError(`No specific ingredients detected. Try adding common vegetables manually or upload a closer image. Detected objects: ${predictions.map(p => p.class).join(', ') || 'none'}`)
         }
-        
+
         setLoading(false)
       }
-      
+
       img.src = URL.createObjectURL(imageFile)
     } catch (err) {
       console.error('Image processing error:', err)
@@ -138,7 +138,7 @@ export default function App() {
       'orange': 'orange',
       'lemon': 'lemon',
       'lime': 'lime',
-      
+
       // Vegetables - Direct matches
       'broccoli': 'broccoli',
       'carrot': 'carrot',
@@ -172,7 +172,7 @@ export default function App() {
       'artichoke': 'artichoke',
       'asparagus': 'asparagus',
       'avocado': 'avocado',
-      
+
       // Prepared foods
       'pizza': 'cheese',
       'hot dog': 'sausage',
@@ -199,13 +199,13 @@ export default function App() {
       'tuna': 'tuna',
       'shrimp': 'shrimp',
       'seafood': 'seafood',
-      
+
       // Beverages and containers that might indicate ingredients
       'wine glass': 'wine',
       'cup': 'milk',
       'bottle': 'oil',
       'bowl': 'flour', // often contains ingredients
-      
+
       // Plants and herbs
       'potted plant': 'herbs',
       'plant': 'herbs',
@@ -217,7 +217,7 @@ export default function App() {
       'rosemary': 'rosemary',
       'thyme': 'thyme',
       'oregano': 'oregano',
-      
+
       // Non-food items
       'dining table': null,
       'fork': null,
@@ -229,32 +229,32 @@ export default function App() {
       'chair': null,
       'bench': null
     }
-    
+
     const lowerClassName = className.toLowerCase()
-    
+
     // Direct matches
     if (ingredientMap[lowerClassName]) {
       return ingredientMap[lowerClassName]
     }
-    
+
     // Handle color variations (e.g., "red pepper", "green pepper")
     const colorWords = ['red', 'green', 'yellow', 'orange', 'purple', 'white', 'black', 'brown']
     let cleanClassName = lowerClassName
     colorWords.forEach(color => {
       cleanClassName = cleanClassName.replace(`${color} `, '').replace(` ${color}`, '')
     })
-    
+
     if (ingredientMap[cleanClassName]) {
       return ingredientMap[cleanClassName]
     }
-    
+
     // Partial matches - check if detected object contains known ingredients
     for (const [key, value] of Object.entries(ingredientMap)) {
       if (value && (lowerClassName.includes(key) || key.includes(lowerClassName))) {
         return value
       }
     }
-    
+
     // Special handling for common vegetable synonyms
     const synonyms = {
       'capsicum': 'bell pepper',
@@ -265,13 +265,13 @@ export default function App() {
       'scallion': 'onion',
       'shallot': 'onion'
     }
-    
+
     for (const [synonym, ingredient] of Object.entries(synonyms)) {
       if (lowerClassName.includes(synonym)) {
         return ingredient
       }
     }
-    
+
     return null
   }
 
@@ -293,7 +293,7 @@ export default function App() {
       matchScore: 0.8
     },
     {
-      _id: 'fallback-2', 
+      _id: 'fallback-2',
       title: 'Quick Chicken Stir Fry',
       image: '/photos/Chicken-Teriyaki.jpg',
       ingredients: [{ name: 'chicken', quantity: '200g' }, { name: 'vegetables', quantity: '150g' }],
@@ -318,21 +318,21 @@ export default function App() {
     try {
       setLoading(true)
       setError('')
-      
+
       if (!apiConnected) {
         // Use fallback data when API not available
         const filtered = fallbackRecipes.filter(recipe => {
           if (filters.strictMatch) {
             // STRICT matching: ALL ingredients must be present
-            return ingredients.every(ingredient => 
-              recipe.ingredients.some(ri => 
+            return ingredients.every(ingredient =>
+              recipe.ingredients.some(ri =>
                 ri.name.toLowerCase().includes(ingredient.toLowerCase())
               )
             )
           } else {
             // FLEXIBLE matching: ANY ingredients can be present
-            return ingredients.some(ingredient => 
-              recipe.ingredients.some(ri => 
+            return ingredients.some(ingredient =>
+              recipe.ingredients.some(ri =>
                 ri.name.toLowerCase().includes(ingredient.toLowerCase())
               )
             )
@@ -340,83 +340,115 @@ export default function App() {
         })
         setRecipes(filtered.length > 0 ? filtered : [])
         if (filtered.length === 0) {
-          setError(filters.strictMatch 
+          setError(filters.strictMatch
             ? 'No recipes found that contain ALL selected ingredients. Try disabling strict matching or removing some ingredients.'
             : 'No recipes found with those ingredients. Try different ingredients.'
           )
         }
         return
       }
-      
+
       const response = await axios.post(`${API_BASE}/recipes/match`, {
         ingredients,
         dietary: filters.dietary,
         strictMatch: filters.strictMatch
-      })
-      
-      setRecipes(response.data.data || [])
+      });
+      const recipesWithUserRatingAndFavorite = (response.data.data || []).map(recipe => {
+        let userRating = 0;
+        let isFavorite = false;
+        if (recipe.userRatings && Array.isArray(recipe.userRatings) && user) {
+          const found = recipe.userRatings.find(r => r.userId === user.id);
+          if (found) userRating = found.rating;
+        }
+        if (recipe.favoritesUsers && Array.isArray(recipe.favoritesUsers) && user) {
+          isFavorite = recipe.favoritesUsers.some(u => u === user.id);
+        }
+        return { ...recipe, userRating, isFavorite };
+      });
+      setRecipes(recipesWithUserRatingAndFavorite);
     } catch (err) {
-      console.error('Recipe search error:', err)
-      setError('Using demo recipes. Connect to backend for full functionality.')
-      setRecipes(fallbackRecipes)
+      console.error('Recipe search error:', err);
+      setError('Using demo recipes. Connect to backend for full functionality.');
+      setRecipes(fallbackRecipes);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   const getRecipeSuggestions = async () => {
     try {
-      setLoading(true)
-      setError('')
-      
+      setLoading(true);
+      setError('');
+
       if (!apiConnected) {
         // Use fallback data when API not available
-        let filtered = fallbackRecipes
-        
+        let filtered = fallbackRecipes;
+
         // Apply popular filters
         if (popularFilters.dietary) {
           if (popularFilters.dietary === 'non-vegetarian') {
             // Non-vegetarian: exclude vegetarian and vegan recipes
-            filtered = filtered.filter(recipe => 
+            filtered = filtered.filter(recipe =>
               !recipe.dietary?.includes('vegetarian') && !recipe.dietary?.includes('vegan')
-            )
+            );
           } else {
             // Vegetarian/Vegan: include recipes with specific dietary tag
-            filtered = filtered.filter(recipe => 
+            filtered = filtered.filter(recipe =>
               recipe.dietary?.includes(popularFilters.dietary)
-            )
+            );
           }
         }
         if (popularFilters.cuisine) {
-          filtered = filtered.filter(recipe => 
+          filtered = filtered.filter(recipe =>
             recipe.cuisine === popularFilters.cuisine
-          )
+          );
         }
         if (popularFilters.difficulty) {
-          filtered = filtered.filter(recipe => 
+          filtered = filtered.filter(recipe =>
             recipe.difficulty === popularFilters.difficulty
-          )
+          );
         }
-        
-        setRecipes(filtered)
-        return
+
+        // Set userRating for fallback recipes (if available)
+        const recipesWithUserRating = filtered.map(recipe => {
+          let userRating = 0;
+          if (recipe.userRatings && Array.isArray(recipe.userRatings) && user) {
+            const found = recipe.userRatings.find(r => r.userId === user.id);
+            if (found) userRating = found.rating;
+          }
+          return { ...recipe, userRating };
+        });
+        setRecipes(recipesWithUserRating);
+        return;
       }
-      
+
       // Build query params for API
-      const params = new URLSearchParams()
-      if (popularFilters.dietary) params.append('dietary', popularFilters.dietary)
-      if (popularFilters.cuisine) params.append('cuisine', popularFilters.cuisine)
-      if (popularFilters.difficulty) params.append('difficulty', popularFilters.difficulty)
-      
-      const url = `${API_BASE}/recipes/suggestions${params.toString() ? '?' + params.toString() : ''}`
-      const response = await axios.get(url)
-      setRecipes(response.data.data || [])
+      const params = new URLSearchParams();
+      if (popularFilters.dietary) params.append('dietary', popularFilters.dietary);
+      if (popularFilters.cuisine) params.append('cuisine', popularFilters.cuisine);
+      if (popularFilters.difficulty) params.append('difficulty', popularFilters.difficulty);
+
+      const url = `${API_BASE}/recipes/suggestions${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await axios.get(url);
+      const recipesWithUserRatingAndFavorite = (response.data.data || []).map(recipe => {
+        let userRating = 0;
+        let isFavorite = false;
+        if (recipe.userRatings && Array.isArray(recipe.userRatings) && user) {
+          const found = recipe.userRatings.find(r => r.userId === user.id);
+          if (found) userRating = found.rating;
+        }
+        if (recipe.favoritesUsers && Array.isArray(recipe.favoritesUsers) && user) {
+          isFavorite = recipe.favoritesUsers.some(u => u === user.id);
+        }
+        return { ...recipe, userRating, isFavorite };
+      });
+      setRecipes(recipesWithUserRatingAndFavorite);
     } catch (err) {
-      console.error('Suggestions error:', err)
-      setError('Using demo recipes. Connect to backend for full functionality.')
-      setRecipes(fallbackRecipes)
+      console.error('Suggestions error:', err);
+      setError('Using demo recipes. Connect to backend for full functionality.');
+      setRecipes(fallbackRecipes);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -426,10 +458,21 @@ export default function App() {
       return;
     }
     try {
-      await axios.post(`${API_BASE}/recipes/${recipeId}/rate`, { rating, userId: user?.id })
-      setRecipes(prev => prev.map(recipe => 
-        recipe._id === recipeId 
-          ? { ...recipe, userRating: rating }
+      await axios.post(`${API_BASE}/recipes/${recipeId}/rate`, { rating, userId: user?.id });
+      // Fetch updated recipe from backend
+      const recipeRes = await axios.get(`${API_BASE}/recipes/${recipeId}`);
+      const updatedRecipe = recipeRes.data?.data;
+      setRecipes(prev => prev.map(recipe =>
+        recipe._id === recipeId && updatedRecipe
+          ? {
+            ...recipe,
+            userRating: rating,
+            ratings: updatedRecipe.ratings,
+            avgRating: updatedRecipe.ratings && updatedRecipe.ratings.length > 0
+              ? (updatedRecipe.ratings.reduce((a, b) => a + b, 0) / updatedRecipe.ratings.length).toFixed(1)
+              : 0,
+            totalRatings: updatedRecipe.ratings ? updatedRecipe.ratings.length : 0
+          }
           : recipe
       ))
     } catch (err) {
@@ -455,14 +498,14 @@ export default function App() {
         await axios.post(`${API_BASE}/recipes/${recipeId}/favorite`, { userId: user?.id })
         setFavorites(prev => new Set([...prev, recipeId]))
       }
-      setRecipes(prev => prev.map(recipe => 
-        recipe._id === recipeId 
-          ? { 
-              ...recipe, 
-              favorites: isFavorite 
-                ? Math.max(0, (recipe.favorites || 0) - 1)
-                : (recipe.favorites || 0) + 1
-            }
+      setRecipes(prev => prev.map(recipe =>
+        recipe._id === recipeId
+          ? {
+            ...recipe,
+            favorites: isFavorite
+              ? Math.max(0, (recipe.favorites || 0) - 1)
+              : (recipe.favorites || 0) + 1
+          }
           : recipe
       ))
     } catch (err) {
@@ -471,22 +514,36 @@ export default function App() {
   }
 
   const getFavoriteRecipes = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       if (!user) {
-        setRecipes([])
-        setError('Please login to view your favorites.')
-        return
+        setRecipes([]);
+        setError('Please login to view your favorites.');
+        return;
       }
-      const response = await axios.get(`${API_BASE}/recipes/favorites?userId=${user.id}`)
-      setRecipes(response.data.data || [])
+      const response = await axios.get(`${API_BASE}/recipes/favorites?userId=${user.id}`);
+      console.log('API favorites response:', response.data.data);
+      const recipesWithUserRatingAndFavorite = (response.data.data || []).map(recipe => {
+        let userRating = 0;
+        let isFavorite = false;
+        if (recipe.userRatings && Array.isArray(recipe.userRatings)) {
+          const found = recipe.userRatings.find(r => r.userId === user.id);
+          if (found) userRating = found.rating;
+        }
+        if (recipe.favoritesUsers && Array.isArray(recipe.favoritesUsers) && user) {
+          isFavorite = recipe.favoritesUsers.some(u => u === user.id);
+        }
+        return { ...recipe, userRating, isFavorite };
+      });
+      setRecipes(recipesWithUserRatingAndFavorite);
     } catch (err) {
-      console.error('Favorites error:', err)
-      setError('Could not load favorite recipes.')
+      console.error('Favorites error:', err);
+      setError('Could not load favorite recipes.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
+
 
   const addIngredient = (ingredient) => {
     if (ingredient.trim() && !ingredients.includes(ingredient.toLowerCase())) {
@@ -499,7 +556,7 @@ export default function App() {
   }
 
   const substituteIngredient = (original, substitute) => {
-    setIngredients(prev => prev.map(ing => 
+    setIngredients(prev => prev.map(ing =>
       ing === original.toLowerCase() ? substitute.toLowerCase() : ing
     ))
   }
@@ -518,7 +575,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 w-full">
       <Header user={user} onLogout={handleLogout} onAuth={setUser} authOpen={authModalOpen} setAuthOpen={setAuthModalOpen} />
-      
+
       <main className="w-full px-4 pb-8 min-h-screen">
         {/* Connection Status */}
         {!apiConnected && (
@@ -528,7 +585,7 @@ export default function App() {
             </div>
           </div>
         )}
-        
+
         {/* Tab Navigation - Sticky */}
         <div className="sticky top-20 z-40 bg-gradient-to-r from-blue-50/90 via-purple-50/90 to-pink-50/90 backdrop-blur-md py-4 mb-6 rounded-xl mx-2">
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 px-4">
@@ -537,11 +594,10 @@ export default function App() {
                 setActiveTab('upload');
                 setRecipes([]);
               }}
-              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${
-                activeTab === 'upload'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                  : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
-              }`}
+              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${activeTab === 'upload'
+                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
+                }`}
             >
               📷 Upload Image
             </button>
@@ -550,11 +606,10 @@ export default function App() {
                 setActiveTab('search');
                 setRecipes([]);
               }}
-              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${
-                activeTab === 'search'
-                  ? 'bg-gradient-to-r from-green-500 to-blue-600 text-white shadow-lg'
-                  : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
-              }`}
+              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${activeTab === 'search'
+                ? 'bg-gradient-to-r from-green-500 to-blue-600 text-white shadow-lg'
+                : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
+                }`}
             >
               🔍 Search Recipes
             </button>
@@ -563,11 +618,10 @@ export default function App() {
                 setActiveTab('suggestions')
                 getRecipeSuggestions()
               }}
-              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${
-                activeTab === 'suggestions'
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg'
-                  : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
-              }`}
+              className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${activeTab === 'suggestions'
+                ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg'
+                : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
+                }`}
             >
               ⭐ Popular Recipes
             </button>
@@ -577,11 +631,10 @@ export default function App() {
                   setActiveTab('favorites')
                   getFavoriteRecipes()
                 }}
-                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${
-                  activeTab === 'favorites'
-                    ? 'bg-gradient-to-r from-pink-500 to-red-600 text-white shadow-lg'
-                    : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
-                }`}
+                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${activeTab === 'favorites'
+                  ? 'bg-gradient-to-r from-pink-500 to-red-600 text-white shadow-lg'
+                  : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
+                  }`}
               >
                 ❤️ My Favorites
               </button>
@@ -605,229 +658,254 @@ export default function App() {
           <div className="lg:w-80 xl:w-96 2xl:w-[400px] flex-shrink-0">
             <div className="sticky top-24 max-h-[80vh] overflow-y-auto overflow-x-hidden space-y-6">
               {activeTab === 'upload' && (
-                <ImageUpload 
+                <ImageUpload
                   onImageUpload={handleImageUpload}
                   loading={loading}
                   modelLoaded={!!model}
                 />
               )}
-            
-            {activeTab === 'search' && (
-              <div className="space-y-6">
-                <IngredientList
-                  ingredients={ingredients}
-                  onAdd={addIngredient}
-                  onRemove={removeIngredient}
-                  onClear={clearAll}
-                />
-                
-                <SubstitutionPanel 
-                  ingredients={ingredients}
-                  onSubstitute={substituteIngredient}
-                />
-                
-                <FilterPanel 
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                />
-                
-                <button
-                  onClick={findRecipes}
-                  disabled={ingredients.length === 0 || loading}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 px-6 rounded-xl hover:from-emerald-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-semibold text-lg shadow-lg transform hover:scale-[1.02] disabled:hover:scale-100 flex items-center justify-center gap-2"
-                >
-                  <span className="animate-bounce">🔍</span>
-                  Find Recipes ({ingredients.length} ingredients)
-                </button>
-              </div>
-            )}
-            
-            {activeTab === 'suggestions' && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-lg shadow-sm border p-6">
-                  <h2 className="text-lg font-semibold mb-4">⭐ Popular Recipes</h2>
-                  <p className="text-gray-600 text-sm mb-4">
-                    Discover highly-rated recipes from our community. Filter by your preferences to find the perfect dish!
-                  </p>
-                  
-                  {/* Popular Recipe Filters */}
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      {/* Dietary Filter */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Dietary Preference
-                        </label>
-                        <select
-                          value={popularFilters.dietary}
-                          onChange={(e) => setPopularFilters(prev => ({ ...prev, dietary: e.target.value }))}
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+
+              {activeTab === 'search' && (
+                <div className="space-y-6">
+                  <IngredientList
+                    ingredients={ingredients}
+                    onAdd={addIngredient}
+                    onRemove={removeIngredient}
+                    onClear={clearAll}
+                  />
+
+                  <SubstitutionPanel
+                    ingredients={ingredients}
+                    onSubstitute={substituteIngredient}
+                  />
+
+                  <FilterPanel
+                    filters={filters}
+                    onFiltersChange={setFilters}
+                  />
+
+                  <button
+                    onClick={findRecipes}
+                    disabled={ingredients.length === 0 || loading}
+                    className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 px-6 rounded-xl hover:from-emerald-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-semibold text-lg shadow-lg transform hover:scale-[1.02] disabled:hover:scale-100 flex items-center justify-center gap-2"
+                  >
+                    <span className="animate-bounce">🔍</span>
+                    Find Recipes ({ingredients.length} ingredients)
+                  </button>
+                </div>
+              )}
+
+              {activeTab === 'suggestions' && (
+                <div className="space-y-6">
+                  <div className="bg-white rounded-lg shadow-sm border p-6">
+                    <h2 className="text-lg font-semibold mb-4">⭐ Popular Recipes</h2>
+                    <p className="text-gray-600 text-sm mb-4">
+                      Discover highly-rated recipes from our community. Filter by your preferences to find the perfect dish!
+                    </p>
+
+                    {/* Popular Recipe Filters */}
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {/* Dietary Filter */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Dietary Preference
+                          </label>
+                          <select
+                            value={popularFilters.dietary}
+                            onChange={(e) => setPopularFilters(prev => ({ ...prev, dietary: e.target.value }))}
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                          >
+                            <option value="">All recipes</option>
+                            <option value="vegetarian">🌱 Vegetarian</option>
+                            <option value="vegan">🌿 Vegan</option>
+                            <option value="non-vegetarian">🍗 Non-Vegetarian</option>
+                          </select>
+                        </div>
+
+                        {/* Cuisine Filter */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Cuisine
+                          </label>
+                          <select
+                            value={popularFilters.cuisine}
+                            onChange={(e) => setPopularFilters(prev => ({ ...prev, cuisine: e.target.value }))}
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                          >
+                            <option value="">All cuisines</option>
+                            <option value="Indian">🍛 Indian</option>
+                            <option value="Italian">🍝 Italian</option>
+                            <option value="Asian">🍜 Asian</option>
+                            <option value="Mexican">🌮 Mexican</option>
+                            <option value="American">🍔 American</option>
+                            <option value="French">🍾 French</option>
+                            <option value="Greek">🏺 Greek</option>
+                            <option value="Middle Eastern">🥙 Middle Eastern</option>
+                          </select>
+                        </div>
+
+                        {/* Difficulty Filter */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Difficulty
+                          </label>
+                          <select
+                            value={popularFilters.difficulty}
+                            onChange={(e) => setPopularFilters(prev => ({ ...prev, difficulty: e.target.value }))}
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                          >
+                            <option value="">All levels</option>
+                            <option value="easy">🟢 Easy</option>
+                            <option value="medium">🟡 Medium</option>
+                            <option value="hard">🔴 Hard</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Filter Actions */}
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={getRecipeSuggestions}
+                          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                         >
-                          <option value="">All recipes</option>
-                          <option value="vegetarian">🌱 Vegetarian</option>
-                          <option value="vegan">🌿 Vegan</option>
-                          <option value="non-vegetarian">🍗 Non-Vegetarian</option>
-                        </select>
-                      </div>
-                      
-                      {/* Cuisine Filter */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Cuisine
-                        </label>
-                        <select
-                          value={popularFilters.cuisine}
-                          onChange={(e) => setPopularFilters(prev => ({ ...prev, cuisine: e.target.value }))}
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                          Apply Filters
+                        </button>
+                        <button
+                          onClick={() => {
+                            setPopularFilters({ dietary: '', cuisine: '', difficulty: '' })
+                            getRecipeSuggestions()
+                          }}
+                          className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm"
                         >
-                          <option value="">All cuisines</option>
-                          <option value="Indian">🍛 Indian</option>
-                          <option value="Italian">🍝 Italian</option>
-                          <option value="Asian">🍜 Asian</option>
-                          <option value="Mexican">🌮 Mexican</option>
-                          <option value="American">🍔 American</option>
-                          <option value="French">🍾 French</option>
-                          <option value="Greek">🏺 Greek</option>
-                          <option value="Middle Eastern">🥙 Middle Eastern</option>
-                        </select>
-                      </div>
-                      
-                      {/* Difficulty Filter */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Difficulty
-                        </label>
-                        <select
-                          value={popularFilters.difficulty}
-                          onChange={(e) => setPopularFilters(prev => ({ ...prev, difficulty: e.target.value }))}
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                        >
-                          <option value="">All levels</option>
-                          <option value="easy">🟢 Easy</option>
-                          <option value="medium">🟡 Medium</option>
-                          <option value="hard">🔴 Hard</option>
-                        </select>
+                          Clear
+                        </button>
                       </div>
                     </div>
-                    
-                    {/* Filter Actions */}
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={getRecipeSuggestions}
-                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-                      >
-                        Apply Filters
-                      </button>
-                      <button
-                        onClick={() => {
-                          setPopularFilters({ dietary: '', cuisine: '', difficulty: '' })
-                          getRecipeSuggestions()
-                        }}
-                        className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm"
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* Active Filters Display */}
-                  {(popularFilters.dietary || popularFilters.cuisine || popularFilters.difficulty) && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                      <div className="text-xs text-blue-800 font-medium mb-1">Active filters:</div>
-                      <div className="flex flex-wrap gap-1">
-                        {popularFilters.dietary && (
-                          <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                            {popularFilters.dietary === 'non-vegetarian' ? 'Non-Veg' : popularFilters.dietary}
-                          </span>
-                        )}
-                        {popularFilters.cuisine && (
-                          <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                            {popularFilters.cuisine}
-                          </span>
-                        )}
-                        {popularFilters.difficulty && (
-                          <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                            {popularFilters.difficulty}
-                          </span>
-                        )}
+
+                    {/* Active Filters Display */}
+                    {(popularFilters.dietary || popularFilters.cuisine || popularFilters.difficulty) && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <div className="text-xs text-blue-800 font-medium mb-1">Active filters:</div>
+                        <div className="flex flex-wrap gap-1">
+                          {popularFilters.dietary && (
+                            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                              {popularFilters.dietary === 'non-vegetarian' ? 'Non-Veg' : popularFilters.dietary}
+                            </span>
+                          )}
+                          {popularFilters.cuisine && (
+                            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                              {popularFilters.cuisine}
+                            </span>
+                          )}
+                          {popularFilters.difficulty && (
+                            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                              {popularFilters.difficulty}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                    )}
+
+                    {/* Recipe Discovery Tips */}
+                    <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                      <h3 className="text-sm font-semibold text-gray-800 mb-2">💡 Recipe Discovery Tips</h3>
+                      <ul className="text-xs text-gray-600 space-y-1">
+                        <li>• <strong>Mix cuisines:</strong> Try Italian vegetarian or Asian easy recipes</li>
+                        <li>• <strong>Difficulty levels:</strong> Start with easy recipes for quick meals</li>
+                        <li>• <strong>Dietary filters:</strong> Discover plant-based alternatives</li>
+                        <li>• <strong>High ratings:</strong> Community favorites are shown first</li>
+                      </ul>
                     </div>
-                  )}
-                  
-                  {/* Recipe Discovery Tips */}
-                  <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
-                    <h3 className="text-sm font-semibold text-gray-800 mb-2">💡 Recipe Discovery Tips</h3>
-                    <ul className="text-xs text-gray-600 space-y-1">
-                      <li>• <strong>Mix cuisines:</strong> Try Italian vegetarian or Asian easy recipes</li>
-                      <li>• <strong>Difficulty levels:</strong> Start with easy recipes for quick meals</li>
-                      <li>• <strong>Dietary filters:</strong> Discover plant-based alternatives</li>
-                      <li>• <strong>High ratings:</strong> Community favorites are shown first</li>
-                    </ul>
-                  </div>
-                  
-                  {/* Quick Stats */}
-                  <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <div className="text-lg font-bold text-green-600">11+</div>
-                      <div className="text-xs text-gray-600">Cuisines</div>
-                    </div>
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <div className="text-lg font-bold text-purple-600">4.2★</div>
-                      <div className="text-xs text-gray-600">Avg Rating</div>
+
+                    {/* Quick Stats */}
+                    <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <div className="text-lg font-bold text-green-600">11+</div>
+                        <div className="text-xs text-gray-600">Cuisines</div>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <div className="text-lg font-bold text-purple-600">4.2★</div>
+                        <div className="text-xs text-gray-600">Avg Rating</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-            
-            {activeTab === 'favorites' && (
-              <div className="space-y-6">
-                {!user ? (
-                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-6 rounded-lg text-center">
-                    <div className="text-3xl mb-2">🔒</div>
-                    <h2 className="text-lg font-bold mb-2">Login Required</h2>
-                    <p className="text-sm">Please login to view and manage your favorite recipes.</p>
-                  </div>
-                ) : (
-                  <div className="bg-gradient-to-br from-white via-pink-50/30 to-red-50/30 rounded-xl shadow-lg border-2 border-transparent p-6 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-red-500/5 opacity-50"></div>
-                    <div className="relative z-10">
-                      <h2 className="text-lg font-semibold mb-4 bg-gradient-to-r from-pink-600 to-red-600 bg-clip-text text-transparent flex items-center">
-                        <span className="text-2xl mr-2 animate-pulse">❤️</span> My Favorite Recipes
-                      </h2>
-                      <p className="text-gray-600 text-sm mb-4">
-                        Your most loved recipes and community favorites! These are the top-rated recipes based on user preferences and ratings.
-                      </p>
-                      
-                      {/* Favorites Info */}
-                      <div className="p-4 bg-gradient-to-r from-rose-100 to-pink-100 rounded-lg border border-rose-200 shadow-sm">
-                        <h3 className="text-sm font-semibold text-rose-800 mb-2 flex items-center gap-2">
-                          <span className="animate-bounce">💝</span> How Favorites Work:
-                        </h3>
-                        <ul className="text-sm text-rose-700 space-y-1">
-                          <li>• Click the heart icon on any recipe card to add it to favorites</li>
-                          <li>• Recipes are ranked by community favorites and ratings</li>
-                          <li>• Your favorites help other users discover great recipes</li>
-                          <li>• The more stars and hearts, the higher the recipe ranks</li>
-                        </ul>
-                      </div>
-                      
-                      {/* Quick Stats for Favorites */}
-                      <div className="mt-4 grid grid-cols-2 gap-4 text-center">
-                        <div className="bg-gradient-to-r from-pink-50 to-rose-50 p-3 rounded-lg border border-pink-200">
-                          <div className="text-lg font-bold text-pink-600">{favorites.size}</div>
-                          <div className="text-xs text-pink-700">Your Favorites</div>
-                        </div>
-                        <div className="bg-gradient-to-r from-red-50 to-pink-50 p-3 rounded-lg border border-red-200">
-                          <div className="text-lg font-bold text-red-600">4.5★</div>
-                          <div className="text-xs text-red-700">Avg Rating</div>
-                        </div>
-                      </div>
+              )}
+
+              {activeTab === 'favorites' && (
+                <div className="space-y-6">
+                  {!user ? (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-6 rounded-lg text-center">
+                      <div className="text-3xl mb-2">🔒</div>
+                      <h2 className="text-lg font-bold mb-2">Login Required</h2>
+                      <p className="text-sm">Please login to view and manage your favorite recipes.</p>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  ) : (
+                    <>
+                      <div className="bg-gradient-to-br from-white via-pink-50/30 to-red-50/30 rounded-xl shadow-lg border-2 border-transparent p-6 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-red-500/5 opacity-50"></div>
+                        <div className="relative z-10">
+                          <h2 className="text-lg font-semibold mb-4 bg-gradient-to-r from-pink-600 to-red-600 bg-clip-text text-transparent flex items-center">
+                            <span className="text-2xl mr-2 animate-pulse">❤️</span> My Favorite Recipes
+                          </h2>
+                          <p className="text-gray-600 text-sm mb-4">
+                            Your most loved recipes and community favorites! These are the top-rated recipes based on user preferences and ratings.
+                          </p>
+
+                          {/* Favorites Info */}
+                          <div className="p-4 bg-gradient-to-r from-rose-100 to-pink-100 rounded-lg border border-rose-200 shadow-sm">
+                            <h3 className="text-sm font-semibold text-rose-800 mb-2 flex items-center gap-2">
+                              <span className="animate-bounce">💝</span> How Favorites Work:
+                            </h3>
+                            <ul className="text-sm text-rose-700 space-y-1">
+                              <li>• Click the heart icon on any recipe card to add it to favorites</li>
+                              <li>• Recipes are ranked by community favorites and ratings</li>
+                              <li>• Your favorites help other users discover great recipes</li>
+                              <li>• The more stars and hearts, the higher the recipe ranks</li>
+                            </ul>
+                          </div>
+
+                          {/* Quick Stats for Favorites */}
+                          <div className="mt-4 grid grid-cols-2 gap-4 text-center">
+                            <div className="bg-gradient-to-r from-pink-50 to-rose-50 p-3 rounded-lg border border-pink-200">
+                              <div className="text-lg font-bold text-pink-600">{activeTab === 'favorites' ? recipes.length : favorites.size}</div>
+                              <div className="text-xs text-pink-700">My Favorites</div>
+                            </div>
+                            <div className="bg-gradient-to-r from-red-50 to-pink-50 p-3 rounded-lg border border-red-200">
+                              <div className="text-lg font-bold text-red-600">
+                                {activeTab === 'favorites' && recipes.length > 0
+                                  ? `${(
+                                    recipes.reduce((sum, r) => sum + (r.ratings && r.ratings.length > 0
+                                      ? r.ratings.reduce((a, b) => a + b, 0) / r.ratings.length
+                                      : 0), 0) / recipes.length
+                                  ).toFixed(1)}★`
+                                  : '—'}
+                              </div>
+                              <div className="text-xs text-red-700">Avg Rating</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {recipes.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 lg:gap-6 w-full mt-6">
+                          {recipes.map(recipe => (
+                            <RecipeCard
+                              key={`recipe-${recipe._id}-favorites`}
+                              recipe={recipe}
+                              onRate={rateRecipe}
+                              onToggleFavorite={toggleFavorite}
+                              isFavorite={recipe.isFavorite}
+                              user={user}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -851,7 +929,7 @@ export default function App() {
                 <div className="text-6xl mb-4">🍳</div>
                 <h3 className="text-xl font-medium mb-2">No recipes found</h3>
                 <p>
-                  {activeTab === 'search' 
+                  {activeTab === 'search'
                     ? 'Add ingredients and search to find recipes'
                     : 'No popular recipes available'
                   }

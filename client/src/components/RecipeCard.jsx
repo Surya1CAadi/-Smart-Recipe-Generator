@@ -118,8 +118,14 @@ export default function RecipeCard({ recipe, onRate, onToggleFavorite, isFavorit
         onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()
-          if (onToggleFavorite && user) onToggleFavorite(recipe._id)
-          setLocalFavorite(prev => !prev)
+          if (!user) return;
+          if (onToggleFavorite && !localFavorite) {
+            onToggleFavorite(recipe._id)
+            setLocalFavorite(true)
+          } else if (onToggleFavorite && localFavorite) {
+            onToggleFavorite(recipe._id)
+            setLocalFavorite(false)
+          }
         }}
         disabled={!user}
         className={`absolute right-3 top-3 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-transform transform hover:scale-105 ${localFavorite ? 'bg-pink-500 text-white' : 'bg-white/90 text-pink-500'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -246,7 +252,6 @@ export default function RecipeCard({ recipe, onRate, onToggleFavorite, isFavorit
                     {avgRating > 0 ? `${avgRating} (${recipe.ratings?.length || 0})` : 'No ratings yet'}
                   </span>
                 </div>
-                
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600">Rate:</span>
                   <StarRating rating={userRating} interactive={!!user} />
