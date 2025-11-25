@@ -1,4 +1,4 @@
-# Smart Recipe Generator — Complete MERN Application 
+# Smart Recipe Generator
 
 A comprehensive full-stack web application that suggests recipes based on available ingredients or uploaded food photos using AI-powered ingredient recognition.
 
