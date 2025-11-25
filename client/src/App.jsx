@@ -361,7 +361,7 @@ export default function App() {
           if (found) userRating = found.rating;
         }
         if (recipe.favoritesUsers && Array.isArray(recipe.favoritesUsers) && user) {
-          isFavorite = recipe.favoritesUsers.some(u => u === user.id);
+            isFavorite = recipe.favoritesUsers.some(u => String(u) === String(user.id));
         }
         return { ...recipe, userRating, isFavorite };
       });
@@ -438,7 +438,7 @@ export default function App() {
           if (found) userRating = found.rating;
         }
         if (recipe.favoritesUsers && Array.isArray(recipe.favoritesUsers) && user) {
-          isFavorite = recipe.favoritesUsers.some(u => u === user.id);
+            isFavorite = recipe.favoritesUsers.some(u => String(u) === String(user.id));
         }
         return { ...recipe, userRating, isFavorite };
       });
@@ -531,7 +531,7 @@ export default function App() {
           if (found) userRating = found.rating;
         }
         if (recipe.favoritesUsers && Array.isArray(recipe.favoritesUsers) && user) {
-          isFavorite = recipe.favoritesUsers.some(u => u === user.id);
+            isFavorite = recipe.favoritesUsers.some(u => String(u) === String(user.id));
         }
         return { ...recipe, userRating, isFavorite };
       });
