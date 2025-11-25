@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const Recipe = require('./models/recipe');
+const User = require('./models/User');
 
 const app = express();
 app.use(cors());
@@ -80,60 +81,63 @@ app.post('/api/recipes/match', async (req, res) => {
   }
 });
 
-// Rate a recipe
+// Rate a recipe (per-user)
 app.post('/api/recipes/:id/rate', async (req, res) => {
   try {
-    const { rating } = req.body;
-    if (rating < 1 || rating > 5) {
-      return res.status(400).json({ ok: false, error: 'Rating must be between 1-5' });
-    }
-    
+    const { rating, userId } = req.body;
+    if (!userId) return res.status(400).json({ ok: false, error: 'Missing userId' });
+    if (rating < 1 || rating > 5) return res.status(400).json({ ok: false, error: 'Rating must be between 1-5' });
     const recipe = await Recipe.findById(req.params.id);
-    if (!recipe) {
-      return res.status(404).json({ ok: false, error: 'Recipe not found' });
-    }
-    
-    recipe.ratings.push(rating);
+    if (!recipe) return res.status(404).json({ ok: false, error: 'Recipe not found' });
+    // Upsert user rating
+    let found = false;
+    recipe.userRatings = (recipe.userRatings || []).map(r => {
+      if (r.userId.toString() === userId) {
+        found = true;
+        return { userId, rating };
+      }
+      return r;
+    });
+    if (!found) recipe.userRatings.push({ userId, rating });
+    // Recalculate average
+    recipe.ratings = recipe.userRatings.map(r => r.rating);
     await recipe.save();
-    
-    const avgRating = recipe.ratings.reduce((a, b) => a + b, 0) / recipe.ratings.length;
-    
+    const avgRating = recipe.ratings.length > 0 ? recipe.ratings.reduce((a, b) => a + b, 0) / recipe.ratings.length : 0;
     res.json({ ok: true, avgRating, totalRatings: recipe.ratings.length });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }
 });
 
-// Add recipe to favorites
+// Add recipe to favorites (per-user)
 app.post('/api/recipes/:id/favorite', async (req, res) => {
   try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ ok: false, error: 'Missing userId' });
     const recipe = await Recipe.findById(req.params.id);
-    if (!recipe) {
-      return res.status(404).json({ ok: false, error: 'Recipe not found' });
+    if (!recipe) return res.status(404).json({ ok: false, error: 'Recipe not found' });
+    if (!recipe.favoritesUsers) recipe.favoritesUsers = [];
+    if (!recipe.favoritesUsers.some(u => u.toString() === userId)) {
+      recipe.favoritesUsers.push(userId);
+      recipe.favorites = recipe.favoritesUsers.length;
+      await recipe.save();
     }
-    
-    // Increment favorites count
-    recipe.favorites = (recipe.favorites || 0) + 1;
-    await recipe.save();
-    
     res.json({ ok: true, favorites: recipe.favorites });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }
 });
 
-// Remove recipe from favorites
+// Remove recipe from favorites (per-user)
 app.delete('/api/recipes/:id/favorite', async (req, res) => {
   try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ ok: false, error: 'Missing userId' });
     const recipe = await Recipe.findById(req.params.id);
-    if (!recipe) {
-      return res.status(404).json({ ok: false, error: 'Recipe not found' });
-    }
-    
-    // Decrement favorites count
-    recipe.favorites = Math.max(0, (recipe.favorites || 0) - 1);
+    if (!recipe) return res.status(404).json({ ok: false, error: 'Recipe not found' });
+    recipe.favoritesUsers = (recipe.favoritesUsers || []).filter(u => u.toString() !== userId);
+    recipe.favorites = recipe.favoritesUsers.length;
     await recipe.save();
-    
     res.json({ ok: true, favorites: recipe.favorites });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
@@ -143,20 +147,20 @@ app.delete('/api/recipes/:id/favorite', async (req, res) => {
 // Get user's favorite recipes
 app.get('/api/recipes/favorites', async (req, res) => {
   try {
-    // For now, return recipes with highest favorites count
-    // In a real app, this would be user-specific
-    const recipes = await Recipe.find({})
-      .sort({ favorites: -1, createdAt: -1 })
-      .limit(10)
-      .lean();
-    
+    const { userId } = req.query;
+    let recipes;
+    if (userId) {
+      recipes = await Recipe.find({ favoritesUsers: userId }).lean();
+    } else {
+      recipes = await Recipe.find({}).sort({ favorites: -1, createdAt: -1 }).limit(10).lean();
+    }
     res.json({ ok: true, data: recipes });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }
 });
 
-// Get recipe suggestions based on popular ratings
+// Get recipe suggestions based on popular ratings and preferences
 app.get('/api/recipes/suggestions', async (req, res) => {
   try {
     const { dietary, cuisine, difficulty } = req.query;
@@ -181,19 +185,60 @@ app.get('/api/recipes/suggestions', async (req, res) => {
     
     const recipes = await Recipe.find(filter).lean();
     
-    const withAvgRating = recipes.map(recipe => {
-      const avgRating = recipe.ratings.length > 0 
+    // Enhanced scoring algorithm based on ratings, favorites, and popularity
+    const scoredRecipes = recipes.map(recipe => {
+      const avgRating = recipe.ratings?.length > 0 
         ? recipe.ratings.reduce((a, b) => a + b, 0) / recipe.ratings.length 
         : 0;
-      return { ...recipe, avgRating, ratingCount: recipe.ratings.length };
+      const ratingScore = avgRating / 5; // Normalize to 0-1
+      
+      const favoritesScore = Math.min((recipe.favorites || 0) / 10, 1); // Cap at 1
+      const popularityScore = Math.min(recipe.ratings?.length || 0, 20) / 20; // Cap at 1
+      
+      // Weight the scores: 50% rating, 25% favorites, 25% popularity
+      const totalScore = (ratingScore * 0.5) + (favoritesScore * 0.25) + (popularityScore * 0.25);
+      
+      return {
+        ...recipe,
+        suggestionScore: totalScore,
+        avgRating: avgRating,
+        popularity: recipe.ratings?.length || 0
+      };
     });
     
-    const suggestions = withAvgRating
-      .filter(r => r.ratingCount >= 1) // At least 1 rating
-      .sort((a, b) => b.avgRating - a.avgRating)
-      .slice(0, 15); // Increased limit for better variety
+    // Sort by suggestion score (highest first)
+    const sortedRecipes = scoredRecipes.sort((a, b) => b.suggestionScore - a.suggestionScore);
     
-    res.json({ ok: true, data: suggestions, filters: { dietary, cuisine, difficulty } });
+    res.json({ ok: true, data: sortedRecipes });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Simple signup
+app.post('/api/signup', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ ok: false, error: 'Email and password required' });
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ ok: false, error: 'Email already registered' });
+    const user = new User({ name, email, password });
+    await user.save();
+    res.json({ ok: true, user: { id: user._id, name: user.name, email: user.email } });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// Simple login
+app.post('/api/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ ok: false, error: 'Invalid credentials' });
+    const match = await user.comparePassword(password);
+    if (!match) return res.status(401).json({ ok: false, error: 'Invalid credentials' });
+    res.json({ ok: true, user: { id: user._id, name: user.name, email: user.email } });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }

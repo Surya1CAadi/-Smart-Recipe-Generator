@@ -21,7 +21,8 @@ const sampleRecipes = [
     cookTimeMin: 25,
     servings: 2,
     dietary: ['vegetarian'],
-    ratings: [5, 4, 5]
+    ratings: [4, 4, 5],
+    favorites: 12
   },
   {
     title: 'Margherita Pizza',
@@ -275,7 +276,8 @@ const sampleRecipes = [
     cookTimeMin: 60,
     servings: 4,
     dietary: [],
-    ratings: [5, 5]
+    ratings: [4, 5],
+    favorites: 8
   },
   
   // Korean
@@ -320,7 +322,8 @@ const sampleRecipes = [
     cookTimeMin: 30,
     servings: 2,
     dietary: [],
-    ratings: [5, 4, 5, 4]
+    ratings: [5, 4, 5, 4],
+    favorites: 11
   },
   
   {
@@ -363,7 +366,8 @@ const sampleRecipes = [
     cookTimeMin: 90,
     servings: 4,
     dietary: ['vegetarian'],
-    ratings: [4, 5, 4]
+    ratings: [5, 5, 4],
+    favorites: 15
   },
   
   // Asian Fusion
@@ -405,9 +409,10 @@ const sampleRecipes = [
     cuisine: 'Greek',
     difficulty: 'medium',
     cookTimeMin: 40,
-    servings: 4,
+    servings: 2,
     dietary: [],
-    ratings: [5, 4, 5]
+    ratings: [5, 4, 5],
+    favorites: 9
   },
   
   {

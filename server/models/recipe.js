@@ -22,6 +22,9 @@ const RecipeSchema = new mongoose.Schema({
   servings: { type: Number, default: 1 },
   dietary: [String],
   ratings: [Number],
+  userRatings: [{ userId: String, rating: Number }], // Track per-user ratings
+  favorites: { type: Number, default: 0 },
+  favoritesUsers: [String], // Track user IDs who favorited
 },{ timestamps: true });
 
 module.exports = mongoose.model('Recipe', RecipeSchema);

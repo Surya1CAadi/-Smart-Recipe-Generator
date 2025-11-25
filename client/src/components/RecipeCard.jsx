@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 
-export default function RecipeCard({ recipe, onRate }) {
+export default function RecipeCard({ recipe, onRate, onToggleFavorite, isFavorite, user }) {
   const [userRating, setUserRating] = useState(recipe.userRating || 0)
   const [expanded, setExpanded] = useState(false)
   const [servingMultiplier, setServingMultiplier] = useState(1)
@@ -15,9 +15,16 @@ export default function RecipeCard({ recipe, onRate }) {
     setUserRating(recipe.userRating || 0)
   }, [recipe._id, recipe.userRating])
 
-  const avgRating = recipe.ratings?.length > 0 
+  const [localFavorite, setLocalFavorite] = useState(isFavorite)
+
+  useEffect(() => {
+    setLocalFavorite(isFavorite)
+  }, [isFavorite])
+
+  // Always show average rating and count from all ratings
+  const avgRating = recipe.ratings && recipe.ratings.length > 0
     ? (recipe.ratings.reduce((a, b) => a + b, 0) / recipe.ratings.length).toFixed(1)
-    : 0
+    : 0;
 
   const matchScore = recipe.matchScore ? Math.round(recipe.matchScore * 100) : null
 
@@ -106,6 +113,20 @@ export default function RecipeCard({ recipe, onRate }) {
 
   return (
     <div className="bg-white rounded-xl shadow-lg border-2 border-transparent bg-gradient-to-br from-white to-gray-50 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 overflow-hidden relative group" data-recipe-id={recipe._id}>
+      {/* Favorite button (top-right) */}
+      <button
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (onToggleFavorite && user) onToggleFavorite(recipe._id)
+          setLocalFavorite(prev => !prev)
+        }}
+        disabled={!user}
+        className={`absolute right-3 top-3 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-transform transform hover:scale-105 ${localFavorite ? 'bg-pink-500 text-white' : 'bg-white/90 text-pink-500'} ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+        aria-label={localFavorite ? 'Remove favorite' : 'Add to favorites'}
+      >
+        {localFavorite ? '❤️' : '🤍'}
+      </button>
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       <div className="relative p-3 sm:p-4 xl:p-6 h-[520px] sm:h-[580px] xl:h-[600px] flex flex-col">
         {/* Header */}
@@ -113,11 +134,18 @@ export default function RecipeCard({ recipe, onRate }) {
           <h3 className="text-lg sm:text-xl font-semibold text-gray-900 flex-1">
             {recipe.title}
           </h3>
-          {matchScore && (
-            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full self-start">
-              {matchScore}% match
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {recipe.favorites > 0 && (
+              <span className="bg-pink-100 text-pink-800 text-xs px-2 py-1 rounded-full">
+                {recipe.favorites} ❤️
+              </span>
+            )}
+            {matchScore && (
+              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full self-start">
+                {matchScore}% match
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Content Area - switches between summary and details */}
@@ -221,7 +249,7 @@ export default function RecipeCard({ recipe, onRate }) {
                 
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600">Rate:</span>
-                  <StarRating rating={userRating} interactive={true} />
+                  <StarRating rating={userRating} interactive={!!user} />
                 </div>
               </div>
 

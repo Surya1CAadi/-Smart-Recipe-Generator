@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import * as tf from '@tensorflow/tfjs'
 import * as cocoSsd from '@tensorflow-models/coco-ssd'
@@ -14,7 +15,9 @@ const API_BASE = '/api' // Use Vite proxy for dev, direct for prod
 
 export default function App() {
   const [ingredients, setIngredients] = useState([])
+  const navigate = useNavigate();
   const [recipes, setRecipes] = useState([])
+  const [favorites, setFavorites] = useState(new Set())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [model, setModel] = useState(null)
@@ -27,12 +30,14 @@ export default function App() {
     strictMatch: true,  // Default to strict matching
     dietary: []
   })
-  const [activeTab, setActiveTab] = useState('search') // search, suggestions, upload
+  const [activeTab, setActiveTab] = useState('search') // search, suggestions, upload, favorites
   const [popularFilters, setPopularFilters] = useState({
     dietary: '',
     cuisine: '',
     difficulty: ''
   })
+  const [user, setUser] = useState(null)
+  const [authModalOpen, setAuthModalOpen] = useState(false)
 
   // Test API connection on mount
   useEffect(() => {
@@ -416,9 +421,12 @@ export default function App() {
   }
 
   const rateRecipe = async (recipeId, rating) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     try {
-      await axios.post(`${API_BASE}/recipes/${recipeId}/rate`, { rating })
-      // Update local recipe with new rating
+      await axios.post(`${API_BASE}/recipes/${recipeId}/rate`, { rating, userId: user?.id })
       setRecipes(prev => prev.map(recipe => 
         recipe._id === recipeId 
           ? { ...recipe, userRating: rating }
@@ -426,6 +434,57 @@ export default function App() {
       ))
     } catch (err) {
       console.error('Rating error:', err)
+    }
+  }
+
+  const toggleFavorite = async (recipeId) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    try {
+      const isFavorite = favorites.has(recipeId)
+      if (isFavorite) {
+        await axios.delete(`${API_BASE}/recipes/${recipeId}/favorite`, { data: { userId: user?.id } })
+        setFavorites(prev => {
+          const newFavorites = new Set(prev)
+          newFavorites.delete(recipeId)
+          return newFavorites
+        })
+      } else {
+        await axios.post(`${API_BASE}/recipes/${recipeId}/favorite`, { userId: user?.id })
+        setFavorites(prev => new Set([...prev, recipeId]))
+      }
+      setRecipes(prev => prev.map(recipe => 
+        recipe._id === recipeId 
+          ? { 
+              ...recipe, 
+              favorites: isFavorite 
+                ? Math.max(0, (recipe.favorites || 0) - 1)
+                : (recipe.favorites || 0) + 1
+            }
+          : recipe
+      ))
+    } catch (err) {
+      console.error('Favorite error:', err)
+    }
+  }
+
+  const getFavoriteRecipes = async () => {
+    setLoading(true)
+    try {
+      if (!user) {
+        setRecipes([])
+        setError('Please login to view your favorites.')
+        return
+      }
+      const response = await axios.get(`${API_BASE}/recipes/favorites?userId=${user.id}`)
+      setRecipes(response.data.data || [])
+    } catch (err) {
+      console.error('Favorites error:', err)
+      setError('Could not load favorite recipes.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -451,9 +510,14 @@ export default function App() {
     setError('')
   }
 
+  const handleLogout = () => {
+    setUser(null)
+    // Optionally clear localStorage/sessionStorage
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 w-full">
-      <Header />
+      <Header user={user} onLogout={handleLogout} onAuth={setUser} authOpen={authModalOpen} setAuthOpen={setAuthModalOpen} />
       
       <main className="w-full px-4 pb-8 min-h-screen">
         {/* Connection Status */}
@@ -469,7 +533,10 @@ export default function App() {
         <div className="sticky top-20 z-40 bg-gradient-to-r from-blue-50/90 via-purple-50/90 to-pink-50/90 backdrop-blur-md py-4 mb-6 rounded-xl mx-2">
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 px-4">
             <button
-              onClick={() => setActiveTab('upload')}
+              onClick={() => {
+                setActiveTab('upload');
+                setRecipes([]);
+              }}
               className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${
                 activeTab === 'upload'
                   ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
@@ -479,7 +546,10 @@ export default function App() {
               📷 Upload Image
             </button>
             <button
-              onClick={() => setActiveTab('search')}
+              onClick={() => {
+                setActiveTab('search');
+                setRecipes([]);
+              }}
               className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${
                 activeTab === 'search'
                   ? 'bg-gradient-to-r from-green-500 to-blue-600 text-white shadow-lg'
@@ -501,6 +571,21 @@ export default function App() {
             >
               ⭐ Popular Recipes
             </button>
+            {user && (
+              <button
+                onClick={() => {
+                  setActiveTab('favorites')
+                  getFavoriteRecipes()
+                }}
+                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 text-sm sm:text-base transform hover:scale-105 ${
+                  activeTab === 'favorites'
+                    ? 'bg-gradient-to-r from-pink-500 to-red-600 text-white shadow-lg'
+                    : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'
+                }`}
+              >
+                ❤️ My Favorites
+              </button>
+            )}
           </div>
         </div>
 
@@ -518,7 +603,7 @@ export default function App() {
         <div className="flex flex-col lg:flex-row lg:gap-8 space-y-6 lg:space-y-0 w-full">
           {/* Left Sidebar - Sticky Controls Section */}
           <div className="lg:w-80 xl:w-96 2xl:w-[400px] flex-shrink-0">
-            <div className="lg:sticky lg:top-32 space-y-6">
+            <div className="sticky top-24 max-h-[80vh] overflow-y-auto overflow-x-hidden space-y-6">
               {activeTab === 'upload' && (
                 <ImageUpload 
                   onImageUpload={handleImageUpload}
@@ -683,10 +768,6 @@ export default function App() {
                   {/* Quick Stats */}
                   <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                     <div className="bg-gray-50 p-3 rounded-lg">
-                      <div className="text-lg font-bold text-blue-600">34+</div>
-                      <div className="text-xs text-gray-600">Recipes</div>
-                    </div>
-                    <div className="bg-gray-50 p-3 rounded-lg">
                       <div className="text-lg font-bold text-green-600">11+</div>
                       <div className="text-xs text-gray-600">Cuisines</div>
                     </div>
@@ -696,6 +777,55 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+            
+            {activeTab === 'favorites' && (
+              <div className="space-y-6">
+                {!user ? (
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-6 rounded-lg text-center">
+                    <div className="text-3xl mb-2">🔒</div>
+                    <h2 className="text-lg font-bold mb-2">Login Required</h2>
+                    <p className="text-sm">Please login to view and manage your favorite recipes.</p>
+                  </div>
+                ) : (
+                  <div className="bg-gradient-to-br from-white via-pink-50/30 to-red-50/30 rounded-xl shadow-lg border-2 border-transparent p-6 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-red-500/5 opacity-50"></div>
+                    <div className="relative z-10">
+                      <h2 className="text-lg font-semibold mb-4 bg-gradient-to-r from-pink-600 to-red-600 bg-clip-text text-transparent flex items-center">
+                        <span className="text-2xl mr-2 animate-pulse">❤️</span> My Favorite Recipes
+                      </h2>
+                      <p className="text-gray-600 text-sm mb-4">
+                        Your most loved recipes and community favorites! These are the top-rated recipes based on user preferences and ratings.
+                      </p>
+                      
+                      {/* Favorites Info */}
+                      <div className="p-4 bg-gradient-to-r from-rose-100 to-pink-100 rounded-lg border border-rose-200 shadow-sm">
+                        <h3 className="text-sm font-semibold text-rose-800 mb-2 flex items-center gap-2">
+                          <span className="animate-bounce">💝</span> How Favorites Work:
+                        </h3>
+                        <ul className="text-sm text-rose-700 space-y-1">
+                          <li>• Click the heart icon on any recipe card to add it to favorites</li>
+                          <li>• Recipes are ranked by community favorites and ratings</li>
+                          <li>• Your favorites help other users discover great recipes</li>
+                          <li>• The more stars and hearts, the higher the recipe ranks</li>
+                        </ul>
+                      </div>
+                      
+                      {/* Quick Stats for Favorites */}
+                      <div className="mt-4 grid grid-cols-2 gap-4 text-center">
+                        <div className="bg-gradient-to-r from-pink-50 to-rose-50 p-3 rounded-lg border border-pink-200">
+                          <div className="text-lg font-bold text-pink-600">{favorites.size}</div>
+                          <div className="text-xs text-pink-700">Your Favorites</div>
+                        </div>
+                        <div className="bg-gradient-to-r from-red-50 to-pink-50 p-3 rounded-lg border border-red-200">
+                          <div className="text-lg font-bold text-red-600">4.5★</div>
+                          <div className="text-xs text-red-700">Avg Rating</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             </div>
@@ -710,6 +840,9 @@ export default function App() {
                     key={`recipe-${recipe._id}-${activeTab}`}
                     recipe={recipe}
                     onRate={rateRecipe}
+                    onToggleFavorite={toggleFavorite}
+                    isFavorite={favorites.has(recipe._id)}
+                    user={user}
                   />
                 ))}
               </div>
