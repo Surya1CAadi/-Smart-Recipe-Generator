@@ -13,9 +13,8 @@ A comprehensive full-stack web application that suggests recipes based on availa
 ---
 
 ## 🌐 Live Project Links
-🔗 **Live Application URL:** https://smart-recipe-generator-jw5a.onrender.com/
-
-🔗 **GitHub Repository:** https://github.com/Surya1CAadi/-Smart-Recipe-Generator
+- 🔗 **Live Application URL:** https://smart-recipe-generator-jw5a.onrender.com/
+- 🔗 **GitHub Repository:** https://github.com/Surya1CAadi/-Smart-Recipe-Generator
 
 ---
 
@@ -38,32 +37,22 @@ Both backend and frontend are deployed on Render for seamless cloud hosting and 
 ---
 
 ## 🍽️ Recipe Database (34+ Recipes)
-**Indian:** Butter Chicken, Palak Paneer, Rajma, Chicken Biryani, Dal Tadka, Aloo Gobi, Tandoori Chicken, Vegetable Biryani
-
-**Italian:** Classic Tomato Pasta, Margherita Pizza, Chicken Alfredo Pasta, Caprese Salad
-
-**Asian:** Chicken Teriyaki, Vegetable Fried Rice, Pad Thai, Kimchi Fried Rice, Beef Stir Fry, Miso Soup
-
-**Mexican:** Black Bean Tacos, Chicken Enchiladas, Guacamole
-
-**Mediterranean:** Greek Salad, Chicken Souvlaki, Falafel, Hummus
-
-**American:** Caesar Salad, Grilled Cheese Sandwich, BBQ Pulled Pork, Mac and Cheese
-
-**French:** French Omelette, Beef Bourguignon
-
-**Others:** Fish and Chips, Spanish Paella, German Potato Salad
+- **Indian:** Butter Chicken, Palak Paneer, Rajma, Chicken Biryani, Dal Tadka, Aloo Gobi, Tandoori Chicken, Vegetable Biryani
+- **Italian:** Classic Tomato Pasta, Margherita Pizza, Chicken Alfredo Pasta, Caprese Salad
+- **Asian:** Chicken Teriyaki, Vegetable Fried Rice, Pad Thai, Kimchi Fried Rice, Beef Stir Fry, Miso Soup
+- **Mexican:** Black Bean Tacos, Chicken Enchiladas, Guacamole
+- **Mediterranean:** Greek Salad, Chicken Souvlaki, Falafel, Hummus
+- **American:** Caesar Salad, Grilled Cheese Sandwich, BBQ Pulled Pork, Mac and Cheese
+- **French:** French Omelette, Beef Bourguignon
+- **Others:** Fish and Chips, Spanish Paella, German Potato Salad
 
 ---
 
 ## 🧑‍💻 Technology Stack
-**Frontend:** React 18, Vite, Tailwind CSS, TensorFlow.js, Axios
-
-**Backend:** Node.js, Express.js, MongoDB, Mongoose
-
-**AI/ML:** TensorFlow.js, COCO-SSD
-
-**DevOps:** Render (backend & frontend)
+- **Frontend:** React 18, Vite, Tailwind CSS, TensorFlow.js, Axios
+- **Backend:** Node.js, Express.js, MongoDB, Mongoose
+- **AI/ML:** TensorFlow.js, COCO-SSD
+- **DevOps:** Render (backend & frontend)
 
 ---
 
